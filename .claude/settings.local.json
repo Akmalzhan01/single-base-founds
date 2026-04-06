@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:single-base-founds.netlify.app)",
+      "Bash(npm install:*)",
+      "Bash(where npm:*)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" install)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" create vite@latest client -- --template react)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" install react-router-dom axios react-hot-toast lucide-react)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" run build)",
+      "Bash(node scripts/seed.js)",
+      "Bash(node -e \"require\\(''dotenv''\\).config\\(\\); console.log\\(''MONGO_URI:'', process.env.MONGO_URI\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text'''']\\)\")",
+      "Bash(powershell -Command \"\\(Get-Content ''C:/Users/Developer/.claude/projects/c--Users-Developer-Desktop-code-karavan-base/d0f3300e-01f9-4a4d-b157-4e84afa53cd8.jsonl''\\).Count\")",
+      "Bash(powershell.exe -Command \"[System.IO.File]::ReadAllLines\\(''C:/Users/Developer/.claude/projects/c--Users-Developer-Desktop-code-karavan-base/d0f3300e-01f9-4a4d-b157-4e84afa53cd8.jsonl''\\).Count\")",
+      "Bash(dir \"C:\\\\Users\\\\Developer\" /b)",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\")",
+      "Bash(powershell 'ls C:\\\\Users\\\\Developer\\\\Downloads')",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\\\\Desktop\\\\code\")",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\")",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\src -Recurse -Filter ''*.jsx'' | Select-Object FullName\")",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\client\\\\src -Recurse -Filter ''*.jsx'' | Select-Object FullName\")",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\src\\\\config\")",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\src\\\\navigation\")",
+      "Bash(powershell \"cat C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\package.json\")",
+      "Bash(powershell \"ls C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\node_modules | Where-Object Name -match ''expo-image|expo-location|expo-map|react-native-maps|image-zoom'' | Select-Object Name\")",
+      "Bash(powershell \"Test-Path C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\node_modules\\\\expo-image-picker\")",
+      "Bash(powershell \"Test-Path C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\node_modules\\\\react-native-maps\")",
+      "Bash(powershell \"Test-Path C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\node_modules\\\\expo-location\")",
+      "Bash(powershell \"Test-Path C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile\\\\node_modules\\\\react-native-webview\")",
+      "Bash(npx expo:*)",
+      "Bash(powershell \"cd ''C:\\\\Users\\\\Developer\\\\Desktop\\\\code\\\\karavan_base\\\\mobile''; npx expo install expo-image-picker\")"
+    ]
+  }
+}
