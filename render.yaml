@@ -4,7 +4,7 @@ services:
     env: node
     region: frankfurt
     plan: free
-    buildCommand: cd client && npm install && npm run build && cd ../server && npm install --omit=dev
+    buildCommand: cd client && npm install && npm run build && cd ../server && npm install --omit=dev --legacy-peer-deps
     startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
