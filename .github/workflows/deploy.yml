@@ -1,0 +1,34 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            cd /var/www/karavan_base
+
+            git pull origin main
+
+            # Server dependencies
+            npm ci --prefix server --omit=dev
+
+            # Client build
+            npm ci --prefix client
+            npm run build --prefix client
+
+            # Restart app
+            pm2 restart ecosystem.config.cjs --update-env
+            pm2 save
