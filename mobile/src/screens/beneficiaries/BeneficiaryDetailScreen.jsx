@@ -14,6 +14,7 @@ import api from '../../config/axios';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/ui/Spinner';
 import { C } from '../../config/colors';
+import { toNeedTypes } from '../../utils/needType';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -176,8 +177,9 @@ const ACTION_META = {
 const FIELD_LABELS = {
   status: 'Абалы', needType: 'Муктаждыгы', fullName: 'Аты-жөнү', address: 'Дарек',
   phone: 'Телефон', birthDate: 'Туулган жылы', childrenCount: 'Балдар саны',
-  guardianType: 'Кимдин карамагында', region: 'Облус', district: 'Район',
+  guardianType: 'Кимдин карамагында', employed: 'Иштейби', region: 'Облус', district: 'Район',
   village: 'Айыл', comments: 'Комментарий', photo: 'Сүрөт',
+  supportSources: 'Ким жардам берет', monthlyIncome: 'Орточо киреше',
 };
 
 function HistoryItem({ log, isLast }) {
@@ -561,7 +563,7 @@ export default function BeneficiaryDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 17, fontWeight: '800', color: C.text, marginBottom: 6 }}>{data.fullName}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                {data.needType    && <Badge label={data.needType} />}
+                {toNeedTypes(data.needType).map(n => <Badge key={n} label={n} />)}
                 {data.status      && <Badge label={data.status} bg="#f1f5f9" color="#64748b" />}
                 {data.guardianType && <Badge label={data.guardianType} bg={C.blueBg} color={C.blue} />}
               </View>
@@ -587,6 +589,15 @@ export default function BeneficiaryDetailScreen() {
           )}
           {data.childrenCount > 0 && (
             <InfoRow icon="people-outline" label="Балдары" value={`${data.childrenCount} бала`} />
+          )}
+          {data.employed != null && (
+            <InfoRow icon="briefcase-outline" label="Иштейби" value={data.employed ? 'Иштейт' : 'Иштебейт'} />
+          )}
+          {data.monthlyIncome != null && (
+            <InfoRow icon="cash-outline" label="Орточо айлык киреше" value={`${Number(data.monthlyIncome).toLocaleString('ru-RU')} сом`} />
+          )}
+          {data.supportSources?.length > 0 && (
+            <InfoRow icon="hand-left-outline" label="Ким жардам берет" value={data.supportSources.join(', ')} />
           )}
           {data.comments && (
             <View style={{ marginTop: 4, borderLeftWidth: 2, borderLeftColor: C.borderLight, paddingLeft: 10 }}>

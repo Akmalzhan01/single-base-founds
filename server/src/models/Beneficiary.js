@@ -31,16 +31,31 @@ const beneficiarySchema = new mongoose.Schema({
     enum: ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'],
     default: 'Карыя',
   },
+  // Бир нече муктаздык тандалышы мүмкүн
   needType: {
-    type: String,
+    type: [String],
     enum: ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'],
-    default: 'Азык-түүлүк',
+    default: () => ['Азык-түүлүк'],
   },
   childrenCount: { type: Number, default: 0 },
   guardianType: {
     type: String,
     enum: ['Жалгыз', 'Эри', 'Аялы', 'Балдары', 'Башка'],
   },
+  employed: { type: Boolean },
+
+  // Ким жардам берет — бир нече булак болушу мүмкүн
+  supportSources: {
+    type: [String],
+    enum: [
+      'Пенсия алат', 'Пособия алат', 'Туугандары жардам берет',
+      'Кошуналар жардам берет', 'Фонддор жардам берет', 'Өзү иштейт', 'Жардам жок',
+    ],
+    default: () => [],
+  },
+  // Орточо айлык киреше (сом)
+  monthlyIncome: { type: Number, min: 0 },
+
   photo: { type: String },
   comments: { type: String },
   clothingSize: { type: String },

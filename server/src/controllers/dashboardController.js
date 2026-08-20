@@ -35,6 +35,8 @@ exports.getStats = catchAsync(async (req, res) => {
       AidRecord.countDocuments({ foundation: foundationId, givenAt: { $gte: startOfMonth } }),
       Beneficiary.aggregate([
         { $match: { registeredBy: foundationId } },
+        // needType — массив, ар бир муктаздык өзүнчө эсептелет
+        { $unwind: '$needType' },
         { $group: { _id: '$needType', count: { $sum: 1 } } },
       ]),
       Beneficiary.aggregate([
@@ -118,6 +120,7 @@ exports.getGlobalStats = catchAsync(async (req, res) => {
       { $sort: { count: -1 } },
     ]),
     Beneficiary.aggregate([
+      { $unwind: '$needType' },
       { $group: { _id: '$needType', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]),

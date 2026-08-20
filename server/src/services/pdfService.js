@@ -123,16 +123,37 @@ exports.generateBeneficiaryPDF = (beneficiary, aidRecords, stream) => {
   infoRow(doc, 'Телефону', beneficiary.phone, lx, y + 60, colW);
   infoRow(doc, 'Абалы', beneficiary.status, lx, y + 90, colW);
   infoRow(doc, 'Балдарынын саны', beneficiary.childrenCount ?? '0', lx, y + 120, colW);
+  infoRow(doc, 'Иштейби', beneficiary.employed == null ? '—' : (beneficiary.employed ? 'Иштейт' : 'Иштебейт'), lx, y + 150, colW);
 
   // Right column
   infoRow(doc, 'Аты-жөнү', beneficiary.fullName, rx, y, colW);
   const region = [beneficiary.region, beneficiary.district, beneficiary.village].filter(Boolean).join(', ');
   infoRow(doc, 'Жашаган жери', region || '—', rx, y + 30, colW);
   infoRow(doc, 'Дареги', beneficiary.address, rx, y + 60, colW);
-  infoRow(doc, 'Муктаждыгы', beneficiary.needType, rx, y + 90, colW);
+  const needTypes = Array.isArray(beneficiary.needType)
+    ? beneficiary.needType.join(', ')
+    : beneficiary.needType;
+  infoRow(doc, 'Муктаждыгы', needTypes || '—', rx, y + 90, colW);
   infoRow(doc, 'Катталган күнү', new Date(beneficiary.createdAt).toLocaleDateString('ru-RU'), rx, y + 120, colW);
+  infoRow(
+    doc,
+    'Орточо айлык киреше',
+    beneficiary.monthlyIncome == null ? '—' : `${Number(beneficiary.monthlyIncome).toLocaleString('ru-RU')} сом`,
+    rx, y + 150, colW
+  );
 
-  y += 155;
+  y += 185;
+
+  // Ким жардам берет — тизме узун болушу мүмкүн, толук кеңдикте
+  const support = (beneficiary.supportSources || []).join(', ');
+  if (support) {
+    doc.font(FONT).fontSize(8.5).fillColor(hex2rgb(C.slateLight))
+       .text('Ким жардам берет:', 50, y, { lineBreak: false });
+    y += 11;
+    doc.font(FONT_BOLD).fontSize(9.5).fillColor(hex2rgb(C.navy))
+       .text(support, 50, y, { width: 495 });
+    y = doc.y + 8;
+  }
 
   // Divider
   strokeColor(doc, C.border).moveTo(50, y).lineTo(545, y).lineWidth(0.5).stroke();

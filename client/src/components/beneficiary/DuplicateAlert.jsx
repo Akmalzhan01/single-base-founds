@@ -2,6 +2,7 @@ import { AlertTriangle, User, Phone, MapPin, Calendar, ChevronDown, ChevronUp } 
 import { useState } from 'react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
+import { toNeedTypes } from '../../utils/needType';
 
 const needColors = {
   'Азык-түүлүк': 'green',
@@ -32,7 +33,9 @@ export default function DuplicateAlert({ data, aidRecords, onContinue, onCancel 
         <div className="flex items-center gap-2 text-sm">
           <User size={15} className="text-gray-400" />
           <span className="font-medium text-gray-800">{data.fullName}</span>
-          <Badge color={needColors[data.needType] || 'gray'}>{data.needType}</Badge>
+          {toNeedTypes(data.needType).map((n) => (
+            <Badge key={n} color={needColors[n] || 'gray'}>{n}</Badge>
+          ))}
         </div>
         {data.phone && (
           <div className="flex items-center gap-2 text-sm text-gray-600">

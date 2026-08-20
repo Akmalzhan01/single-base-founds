@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Phone, MapPin, Calendar, Users, User, Heart, Plus, ChevronDown, Pencil, Trash2, History, FilePlus, FileEdit, FileX } from 'lucide-react';
+import { ArrowLeft, Download, Phone, MapPin, Calendar, Users, User, Heart, Plus, ChevronDown, Pencil, Trash2, History, FilePlus, FileEdit, FileX, Banknote, HandHeart } from 'lucide-react';
 import api from '../../config/axios';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
 import AidModal from './AidModal';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import { toNeedTypes } from '../../utils/needType';
 
 const avatarColors = [
   ['#3b82f6', '#6366f1'], ['#a855f7', '#7c3aed'], ['#f43f5e', '#db2777'],
@@ -123,6 +124,9 @@ const FIELD_LABELS = {
   birthDate: 'Туулган жылы',
   childrenCount: 'Балдар саны',
   guardianType: 'Кимдин карамагында',
+  employed: 'Иштейби',
+  supportSources: 'Ким жардам берет',
+  monthlyIncome: 'Орточо киреше',
   region: 'Облус',
   district: 'Район',
   village: 'Айыл',
@@ -358,9 +362,16 @@ export default function BeneficiaryDetail() {
           )}
           <div className="flex-1 min-w-0 space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge color={needColors[data.needType] || 'gray'}>{data.needType}</Badge>
+              {toNeedTypes(data.needType).map((n) => (
+                <Badge key={n} color={needColors[n] || 'gray'}>{n}</Badge>
+              ))}
               <Badge color="gray">{data.status}</Badge>
               {data.guardianType && <Badge color="blue">{data.guardianType}</Badge>}
+              {data.employed != null && (
+                <Badge color={data.employed ? 'green' : 'gray'}>
+                  {data.employed ? 'Иштейт' : 'Иштебейт'}
+                </Badge>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-y-2 gap-x-4">
               {data.phone && (
@@ -392,6 +403,22 @@ export default function BeneficiaryDetail() {
               <div className="flex items-center gap-2 text-[13px] text-slate-500">
                 <Users size={12} className="text-slate-300 shrink-0" />
                 Балдары: {data.childrenCount}
+              </div>
+            )}
+            {data.monthlyIncome != null && (
+              <div className="flex items-center gap-2 text-[13px] text-slate-500">
+                <Banknote size={12} className="text-slate-300 shrink-0" />
+                Орточо айлык киреше: <span className="font-medium text-slate-700">{Number(data.monthlyIncome).toLocaleString('ru-RU')} сом</span>
+              </div>
+            )}
+            {data.supportSources?.length > 0 && (
+              <div className="flex items-start gap-2 text-[13px] text-slate-500">
+                <HandHeart size={12} className="text-slate-300 shrink-0 mt-1" />
+                <div className="flex flex-wrap gap-1.5">
+                  {data.supportSources.map((src) => (
+                    <Badge key={src} color="blue">{src}</Badge>
+                  ))}
+                </div>
               </div>
             )}
             {data.comments && (

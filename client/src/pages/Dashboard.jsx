@@ -4,6 +4,7 @@ import { Users, Heart, TrendingUp, Building2, ArrowRight, Calendar, MapPin, Bank
 import api from '../config/axios';
 import { useAuth } from '../context/AuthContext';
 import Spinner from '../components/ui/Spinner';
+import { needTypeLabel } from '../utils/needType';
 
 const cardStyle = {
   background: '#fff',
@@ -128,7 +129,7 @@ function RecentItem({ item, onClick }) {
       </div>
       <div className="text-right shrink-0">
         <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: '#f0fdf4', color: '#10b981' }}>
-          {item.needType || '—'}
+          {needTypeLabel(item.needType) || '—'}
         </span>
       </div>
     </div>

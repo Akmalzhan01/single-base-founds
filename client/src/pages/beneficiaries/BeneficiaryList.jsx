@@ -6,6 +6,7 @@ import api from '../../config/axios';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
 import Pagination from '../../components/ui/Pagination';
+import { toNeedTypes } from '../../utils/needType';
 
 const needColors = {
   'Азык-түүлүк': 'green', 'Дары-дармек': 'blue', 'Акча': 'yellow',
@@ -202,7 +203,11 @@ export default function BeneficiaryList() {
                     <td className="px-4 py-3.5 font-mono text-[12px] text-slate-400">{b.inn}</td>
                     <td className="px-4 py-3.5 text-slate-500">{b.phone || '—'}</td>
                     <td className="px-4 py-3.5">
-                      <Badge color={needColors[b.needType] || 'gray'}>{b.needType}</Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {toNeedTypes(b.needType).map((n) => (
+                          <Badge key={n} color={needColors[n] || 'gray'}>{n}</Badge>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-4 py-3.5 text-slate-400 text-[12px]">{b.status}</td>
                     <td className="px-4 py-3.5 text-slate-400 text-[12px]">{b.registeredBy?.name || '—'}</td>

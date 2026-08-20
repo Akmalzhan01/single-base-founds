@@ -4,6 +4,7 @@ import L from 'leaflet';
 import api from '../config/axios';
 import Spinner from '../components/ui/Spinner';
 import { MapPin } from 'lucide-react';
+import { toNeedTypes, needTypeLabel } from '../utils/needType';
 
 // Leaflet default icon fix (Vite uchun)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -96,7 +97,7 @@ export default function MapView() {
                 pathOptions={{
                   color: '#fff',
                   weight: 2,
-                  fillColor: needColors[pin.needType] || '#94a3b8',
+                  fillColor: needColors[toNeedTypes(pin.needType)[0]] || '#94a3b8',
                   fillOpacity: 0.9,
                 }}
               >
@@ -110,7 +111,7 @@ export default function MapView() {
                     </p>
                     <span style={{
                       display: 'inline-block',
-                      background: needColors[pin.needType] || '#94a3b8',
+                      background: needColors[toNeedTypes(pin.needType)[0]] || '#94a3b8',
                       color: '#fff',
                       fontSize: 11,
                       fontWeight: 600,
@@ -118,7 +119,7 @@ export default function MapView() {
                       borderRadius: 20,
                       marginTop: 4,
                     }}>
-                      {pin.needType || 'Башка'}
+                      {needTypeLabel(pin.needType) || 'Башка'}
                     </span>
                   </div>
                 </Popup>

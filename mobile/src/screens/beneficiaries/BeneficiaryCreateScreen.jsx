@@ -13,6 +13,11 @@ import { C } from '../../config/colors';
 const STATUSES       = ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'];
 const NEED_TYPES     = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
 const GUARDIAN_TYPES = ['Жалгыз', 'Эри', 'Аялы', 'Балдары', 'Башка'];
+const EMPLOYED_OPTIONS = ['Иштейт', 'Иштебейт'];
+const SUPPORT_SOURCES  = [
+  'Пенсия алат', 'Пособия алат', 'Туугандары жардам берет',
+  'Кошуналар жардам берет', 'Фонддор жардам берет', 'Өзү иштейт', 'Жардам жок',
+];
 const REGIONS        = ['Бишкек ш.', 'Ош ш.', 'Чүй', 'Ош', 'Жалал-Абад', 'Баткен', 'Нарын', 'Талас', 'Ысык-Көл'];
 const CHILDREN_COUNTS = Array.from({ length: 12 }, (_, i) => String(i));
 
@@ -60,17 +65,25 @@ function FInput({ value, onChangeText, placeholder, keyboardType, secureTextEntr
   );
 }
 
-function Pills({ options, value, onChange }) {
+// multi=true болсо бир нече вариант тандалат (value — массив)
+function Pills({ options, value, onChange, multi }) {
+  const selected = Array.isArray(value) ? value : value ? [value] : [];
+  const isActive = o => (multi ? selected.includes(o) : value === o);
+  const handlePress = (o) => {
+    if (!multi) return onChange(o);
+    onChange(selected.includes(o) ? selected.filter(x => x !== o) : [...selected, o]);
+  };
+
   return (
     <View style={s.pillRow}>
       {options.map(o => (
         <TouchableOpacity
           key={o}
-          style={[s.pill, value === o && s.pillActive]}
-          onPress={() => onChange(o)}
+          style={[s.pill, isActive(o) && s.pillActive]}
+          onPress={() => handlePress(o)}
           activeOpacity={0.8}
         >
-          <Text style={[s.pillText, value === o && s.pillTextActive]}>{o}</Text>
+          <Text style={[s.pillText, isActive(o) && s.pillTextActive]}>{o}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -81,8 +94,9 @@ function Pills({ options, value, onChange }) {
 
 const EMPTY = {
   inn: '', fullName: '', birthDate: '', phone: '', address: '',
-  status: 'Карыя', needType: 'Азык-түүлүк',
-  childrenCount: '0', guardianType: 'Жалгыз',
+  status: 'Карыя', needType: ['Азык-түүлүк'],
+  childrenCount: '0', guardianType: 'Жалгыз', employed: '',
+  supportSources: [], monthlyIncome: '',
   region: '', district: '', village: '', comments: '',
   spouseRelation: '', spouseInn: '', spouseFullName: '',
   spouseBirthDate: '', spousePhone: '', spouseEmployed: '',
@@ -171,6 +185,7 @@ export default function BeneficiaryCreateScreen() {
     try {
       const body = { ...form };
       if (body.childrenCount) body.childrenCount = Number(body.childrenCount);
+      body.employed = form.employed === 'Иштейт' ? true : form.employed === 'Иштебейт' ? false : null;
       body.children = children;
       if (form.spouseFullName) {
         body.spouse = {
@@ -269,7 +284,7 @@ export default function BeneficiaryCreateScreen() {
           </Field>
 
           <Field label="Муктаздыгы">
-            <Pills options={NEED_TYPES} value={form.needType} onChange={set('needType')} />
+            <Pills multi options={NEED_TYPES} value={form.needType} onChange={set('needType')} />
           </Field>
 
           <Field label="Балдарынын саны">
@@ -290,6 +305,23 @@ export default function BeneficiaryCreateScreen() {
 
           <Field label="Кимдин карамагында">
             <Pills options={GUARDIAN_TYPES} value={form.guardianType} onChange={set('guardianType')} />
+          </Field>
+
+          <Field label="Иштейт / Иштебейт">
+            <Pills options={EMPLOYED_OPTIONS} value={form.employed} onChange={set('employed')} />
+          </Field>
+
+          <Field label="Ким жардам берет">
+            <Pills multi options={SUPPORT_SOURCES} value={form.supportSources} onChange={set('supportSources')} />
+          </Field>
+
+          <Field label="Орточо айлык киреше (сом)">
+            <FInput
+              value={form.monthlyIncome}
+              onChangeText={set('monthlyIncome')}
+              placeholder="Мисалы: 5000"
+              keyboardType="numeric"
+            />
           </Field>
 
           <Field label="Облус">

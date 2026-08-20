@@ -44,7 +44,7 @@ const initBot = () => {
       text += `📞 Телефону: ${beneficiary.phone || '—'}\n`;
       text += `📍 Дареги: ${beneficiary.address || '—'}\n`;
       text += `🏷️ Абалы: ${beneficiary.status}\n`;
-      text += `📋 Муктаждыгы: ${beneficiary.needType}\n`;
+      text += `📋 Муктаждыгы: ${[].concat(beneficiary.needType || []).join(', ') || '—'}\n`;
       text += `🏢 Каттаган фонд: ${beneficiary.registeredBy?.name || '—'}\n\n`;
 
       if (aidRecords.length > 0) {
@@ -118,7 +118,7 @@ const initBot = () => {
             inn: session.inn,
             fullName: session.fullName,
             phone: session.phone,
-            needType: session.needType,
+            needType: [session.needType],
             registeredBy: process.env.DEFAULT_FOUNDATION_ID,
           });
           bot.sendMessage(chatId, '✅ Муктаж ийгиликтүү катталды!');

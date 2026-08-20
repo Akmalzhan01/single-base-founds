@@ -8,8 +8,74 @@ const audit = require('../utils/audit');
 
 const TRACKED_FIELDS = [
   'status', 'needType', 'fullName', 'address', 'phone', 'birthDate',
-  'childrenCount', 'guardianType', 'region', 'district', 'village', 'comments',
+  'childrenCount', 'guardianType', 'employed', 'supportSources', 'monthlyIncome',
+  'region', 'district', 'village', 'comments',
 ];
+
+// FormData аркылуу boolean '' | 'true' | 'false' болуп келет.
+// '' — тандалган эмес дегени, аны null кылып тазалайбыз.
+const parseTriBool = (raw) => {
+  if (raw === undefined) return undefined;
+  if (typeof raw === 'boolean') return raw;
+  if (raw === '' || raw === null) return null;
+  return raw === 'true';
+};
+
+// Сан талаалар: бош сап — маани жок дегени (null менен тазаланат)
+const parseNumber = (raw) => {
+  if (raw === undefined) return undefined;
+  if (raw === '' || raw === null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+};
+
+// Массив талаалар (needType, supportSources) FormData аркылуу JSON string болуп келет,
+// эски клиенттерден жөнөкөй string болуп келиши мүмкүн.
+const parseStringArray = (raw) => {
+  if (raw === undefined) return undefined;
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw !== 'string') return [];
+  const val = raw.trim();
+  if (!val) return [];
+  if (val.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [val];
+};
+
+const fmtValue = (v) => {
+  if (Array.isArray(v)) return v.join(', ');
+  return v != null ? String(v) : '';
+};
+
+// Тарыхта 'true'/'false' эмес, окулуучу текст чыгышы үчүн
+const FIELD_FORMATTERS = {
+  employed: (v) => (v == null || v === '' ? '' : (v === true || v === 'true' ? 'Иштейт' : 'Иштебейт')),
+  monthlyIncome: (v) => (v == null || v === '' ? '' : `${Number(v).toLocaleString('ru-RU')} сом`),
+};
+
+// FormData/JSON аркылуу келген талааларды моделге ылайыктайт
+const normalizeBody = (data) => {
+  if (typeof data.children === 'string') {
+    try { data.children = JSON.parse(data.children); } catch { data.children = []; }
+  }
+  if (typeof data.spouse === 'string') {
+    try { data.spouse = JSON.parse(data.spouse); } catch { data.spouse = undefined; }
+  }
+  if (data.needType !== undefined) data.needType = parseStringArray(data.needType);
+  if (data.supportSources !== undefined) data.supportSources = parseStringArray(data.supportSources);
+  if (data.employed !== undefined) data.employed = parseTriBool(data.employed);
+  if (data.monthlyIncome !== undefined) data.monthlyIncome = parseNumber(data.monthlyIncome);
+  return data;
+};
+
+const fmtField = (field, v) =>
+  FIELD_FORMATTERS[field] ? FIELD_FORMATTERS[field](v) : fmtValue(v);
 
 // GET /api/beneficiaries
 exports.getAll = catchAsync(async (req, res) => {
@@ -86,13 +152,7 @@ exports.create = catchAsync(async (req, res) => {
 
   if (req.file) data.photo = req.file.path;
 
-  // children JSON parse (FormData orqali kelsa string bo'ladi)
-  if (typeof data.children === 'string') {
-    try { data.children = JSON.parse(data.children); } catch { data.children = []; }
-  }
-  if (typeof data.spouse === 'string') {
-    try { data.spouse = JSON.parse(data.spouse); } catch { data.spouse = undefined; }
-  }
+  normalizeBody(data);
 
   const beneficiary = await Beneficiary.create(data);
   await beneficiary.populate('registeredBy', 'name');
@@ -130,19 +190,14 @@ exports.update = catchAsync(async (req, res, next) => {
 
   if (req.file) data.photo = req.file.path;
 
-  if (typeof data.children === 'string') {
-    try { data.children = JSON.parse(data.children); } catch { data.children = []; }
-  }
-  if (typeof data.spouse === 'string') {
-    try { data.spouse = JSON.parse(data.spouse); } catch { data.spouse = undefined; }
-  }
+  normalizeBody(data);
 
   // Compute field-level diff for tracked fields
   const changes = [];
   for (const field of TRACKED_FIELDS) {
     if (data[field] !== undefined) {
-      const from = old[field] != null ? String(old[field]) : '';
-      const to = data[field] != null ? String(data[field]) : '';
+      const from = fmtField(field, old[field]);
+      const to = fmtField(field, data[field]);
       if (from !== to) changes.push({ field, from, to });
     }
   }
@@ -222,7 +277,10 @@ exports.exportCsv = catchAsync(async (req, res) => {
     district:      b.district || '',
     village:       b.village || '',
     status:        b.status || '',
-    needType:      b.needType || '',
+    needType:      fmtValue(b.needType),
+    employed:      fmtField('employed', b.employed),
+    supportSources: fmtValue(b.supportSources),
+    monthlyIncome: b.monthlyIncome ?? '',
     childrenCount: b.childrenCount ?? '',
     foundation:    b.registeredBy?.name || '',
     createdAt:     new Date(b.createdAt).toLocaleDateString('ru-RU'),

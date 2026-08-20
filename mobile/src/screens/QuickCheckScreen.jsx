@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import api from '../config/axios';
 import StatusBadge from '../components/ui/StatusBadge';
 import { C } from '../config/colors';
+import { toNeedTypes } from '../utils/needType';
 
 export default function QuickCheckScreen() {
   const navigation = useNavigation();
@@ -105,7 +106,7 @@ export default function QuickCheckScreen() {
                 <Text style={s.resultName}>{result.fullName}</Text>
                 <View style={{ flexDirection: 'row', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
                   <StatusBadge value={result.status} />
-                  {result.needType ? <StatusBadge value={result.needType} /> : null}
+                  {toNeedTypes(result.needType).map(n => <StatusBadge key={n} value={n} />)}
                 </View>
               </View>
             </View>
