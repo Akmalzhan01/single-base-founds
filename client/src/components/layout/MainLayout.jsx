@@ -14,6 +14,7 @@ const pageTitles = {
   '/notices': 'Маалымат тактасы',
   '/profile': 'Профиль',
   '/audit': 'Аудит лог',
+  '/categories': 'Категориялар',
   '/staff': 'Кызматкерлер',
   '/settings': 'Фонд созламалары',
   '/blog': 'Блог',

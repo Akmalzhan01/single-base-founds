@@ -9,15 +9,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import api from '../../config/axios';
 import { C } from '../../config/colors';
 import { toNeedTypes } from '../../utils/needType';
+import { useCategories } from '../../hooks/useCategories';
 
-const STATUSES       = ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'];
-const NEED_TYPES     = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
-const GUARDIAN_TYPES = ['Жалгыз', 'Эри', 'Аялы', 'Балдары', 'Башка'];
+// Абалы, муктаждыгы ж.б. тизмелер серверден (суперадмин башкарат) — useCategories
 const EMPLOYED_OPTIONS = ['Иштейт', 'Иштебейт'];
-const SUPPORT_SOURCES  = [
-  'Пенсия алат', 'Пособия алат', 'Туугандары жардам берет',
-  'Кошуналар жардам берет', 'Фонддор жардам берет', 'Өзү иштейт', 'Жардам жок',
-];
 const REGIONS        = ['Бишкек ш.', 'Ош ш.', 'Чүй', 'Ош', 'Жалал-Абад', 'Баткен', 'Нарын', 'Талас', 'Ысык-Көл'];
 const CHILDREN_COUNTS = Array.from({ length: 12 }, (_, i) => String(i));
 
@@ -87,6 +82,7 @@ function Pills({ options, value, onChange, multi }) {
 export default function BeneficiaryEditScreen() {
   const navigation = useNavigation();
   const route      = useRoute();
+  const { list }   = useCategories();
   const { id, data: initial } = route.params;
 
   const [form, setForm] = useState({
@@ -98,10 +94,10 @@ export default function BeneficiaryEditScreen() {
     region:        initial?.region        || '',
     district:      initial?.district      || '',
     village:       initial?.village       || '',
-    status:        initial?.status        || 'Карыя',
+    status:        initial?.status        || '',
     needType:      toNeedTypes(initial?.needType),
     childrenCount: String(initial?.childrenCount ?? '0'),
-    guardianType:  initial?.guardianType  || 'Жалгыз',
+    guardianType:  initial?.guardianType  || '',
     employed:      initial?.employed == null ? '' : (initial.employed ? 'Иштейт' : 'Иштебейт'),
     supportSources: Array.isArray(initial?.supportSources) ? initial.supportSources : [],
     monthlyIncome: initial?.monthlyIncome != null ? String(initial.monthlyIncome) : '',
@@ -178,10 +174,10 @@ export default function BeneficiaryEditScreen() {
             <FInput value={form.address} onChangeText={set('address')} placeholder="Толук дарек" />
           </Field>
           <Field label="Абалы">
-            <Pills options={STATUSES} value={form.status} onChange={set('status')} />
+            <Pills options={list('status', form.status)} value={form.status} onChange={set('status')} />
           </Field>
           <Field label="Муктаздыгы">
-            <Pills multi options={NEED_TYPES} value={form.needType} onChange={set('needType')} />
+            <Pills multi options={list('needType', form.needType)} value={form.needType} onChange={set('needType')} />
           </Field>
           <Field label="Балдарынын саны">
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -199,13 +195,13 @@ export default function BeneficiaryEditScreen() {
             </ScrollView>
           </Field>
           <Field label="Кимдин карамагында">
-            <Pills options={GUARDIAN_TYPES} value={form.guardianType} onChange={set('guardianType')} />
+            <Pills options={list('guardianType', form.guardianType)} value={form.guardianType} onChange={set('guardianType')} />
           </Field>
           <Field label="Иштейт / Иштебейт">
             <Pills options={EMPLOYED_OPTIONS} value={form.employed} onChange={set('employed')} />
           </Field>
           <Field label="Ким жардам берет">
-            <Pills multi options={SUPPORT_SOURCES} value={form.supportSources} onChange={set('supportSources')} />
+            <Pills multi options={list('supportSources', form.supportSources)} value={form.supportSources} onChange={set('supportSources')} />
           </Field>
           <Field label="Орточо айлык киреше (сом)">
             <FInput

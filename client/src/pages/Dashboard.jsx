@@ -5,6 +5,7 @@ import api from '../config/axios';
 import { useAuth } from '../context/AuthContext';
 import Spinner from '../components/ui/Spinner';
 import { needTypeLabel } from '../utils/needType';
+import { useCategories } from '../context/CategoriesContext';
 
 const cardStyle = {
   background: '#fff',
@@ -13,15 +14,6 @@ const cardStyle = {
 };
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4'];
-
-const STATUS_LABELS = {
-  'Карыя': '#3b82f6',
-  'Жесир': '#a855f7',
-  'Майып': '#f59e0b',
-  'Зейнеткер': '#10b981',
-  'Жалгыз эне': '#f43f5e',
-  'Башка': '#94a3b8',
-};
 
 function StatCard({ label, value, icon: Icon, from, to, sub }) {
   return (
@@ -78,14 +70,15 @@ function TrendChart({ title, data, color = '#10b981' }) {
   );
 }
 
-function BarChart({ title, items, total, colorMap }) {
+// colorOf — категориянын атынан түс кайтаруучу функция (жок болсо палитрадан)
+function BarChart({ title, items, total, colorOf }) {
   return (
     <div className="rounded-2xl p-6" style={cardStyle}>
       <p className="text-[13px] font-semibold text-slate-700 mb-5">{title}</p>
       <div className="space-y-3.5">
         {items.sort((a, b) => b.count - a.count).map((item, i) => {
           const pct = total ? Math.round((item.count / total) * 100) : 0;
-          const color = colorMap?.[item._id] || COLORS[i % COLORS.length];
+          const color = colorOf?.(item._id) || COLORS[i % COLORS.length];
           return (
             <div key={item._id} className="flex items-center gap-3">
               <span className="text-[12px] text-slate-500 shrink-0 w-28 truncate">{item._id || 'Башка'}</span>
@@ -139,6 +132,7 @@ function RecentItem({ item, onClick }) {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { hexOf } = useCategories();
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -199,10 +193,10 @@ export default function Dashboard() {
             <TrendChart title="Берилген жардам (6 ай)" data={stats.monthlyAid} color="#10b981" />
           )}
           {stats?.byNeedType?.length > 0 && (
-            <BarChart title="Муктаждык боюнча" items={stats.byNeedType} total={stats.totalBeneficiaries} />
+            <BarChart title="Муктаждык боюнча" items={stats.byNeedType} total={stats.totalBeneficiaries} colorOf={(n) => hexOf('needType', n)} />
           )}
           {!isSA && stats?.byStatus?.length > 0 && (
-            <BarChart title="Абал боюнча" items={stats.byStatus} total={stats.totalBeneficiaries} colorMap={STATUS_LABELS} />
+            <BarChart title="Абал боюнча" items={stats.byStatus} total={stats.totalBeneficiaries} colorOf={(n) => hexOf('status', n)} />
           )}
           {stats?.byFoundation?.length > 0 && (
             <div className="rounded-2xl p-6" style={cardStyle}>

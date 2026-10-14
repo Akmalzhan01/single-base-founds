@@ -5,11 +5,14 @@ const colors = {
   blue:   'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
   gray:   'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
   purple: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200',
+  orange: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200',
+  cyan:   'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200',
+  pink:   'bg-pink-50 text-pink-700 ring-1 ring-pink-200',
 };
 
 export default function Badge({ children, color = 'gray', className = '' }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${colors[color]} ${className}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${colors[color] || colors.gray} ${className}`}>
       {children}
     </span>
   );

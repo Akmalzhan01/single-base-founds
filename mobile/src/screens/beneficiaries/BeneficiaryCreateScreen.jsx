@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Image,
@@ -9,15 +9,10 @@ import Toast from 'react-native-toast-message';
 import { useNavigation } from '@react-navigation/native';
 import api from '../../config/axios';
 import { C } from '../../config/colors';
+import { useCategories } from '../../hooks/useCategories';
 
-const STATUSES       = ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'];
-const NEED_TYPES     = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
-const GUARDIAN_TYPES = ['Жалгыз', 'Эри', 'Аялы', 'Балдары', 'Башка'];
+// Абалы, муктаждыгы ж.б. тизмелер серверден (суперадмин башкарат) — useCategories
 const EMPLOYED_OPTIONS = ['Иштейт', 'Иштебейт'];
-const SUPPORT_SOURCES  = [
-  'Пенсия алат', 'Пособия алат', 'Туугандары жардам берет',
-  'Кошуналар жардам берет', 'Фонддор жардам берет', 'Өзү иштейт', 'Жардам жок',
-];
 const REGIONS        = ['Бишкек ш.', 'Ош ш.', 'Чүй', 'Ош', 'Жалал-Абад', 'Баткен', 'Нарын', 'Талас', 'Ысык-Көл'];
 const CHILDREN_COUNTS = Array.from({ length: 12 }, (_, i) => String(i));
 
@@ -94,8 +89,8 @@ function Pills({ options, value, onChange, multi }) {
 
 const EMPTY = {
   inn: '', fullName: '', birthDate: '', phone: '', address: '',
-  status: 'Карыя', needType: ['Азык-түүлүк'],
-  childrenCount: '0', guardianType: 'Жалгыз', employed: '',
+  status: '', needType: [],
+  childrenCount: '0', guardianType: '', employed: '',
   supportSources: [], monthlyIncome: '',
   region: '', district: '', village: '', comments: '',
   spouseRelation: '', spouseInn: '', spouseFullName: '',
@@ -106,7 +101,19 @@ const EMPTY = {
 
 export default function BeneficiaryCreateScreen() {
   const navigation = useNavigation();
+  const { list } = useCategories();
   const [form, setForm]           = useState(EMPTY);
+  const statuses = list('status');
+  const guardianTypes = list('guardianType');
+
+  // Категориялар жүктөлгөндө бир тандоочу талааларга биринчи маанини коёбуз
+  useEffect(() => {
+    setForm(f => ({
+      ...f,
+      status: f.status || statuses[0] || '',
+      guardianType: f.guardianType || guardianTypes[0] || '',
+    }));
+  }, [statuses[0], guardianTypes[0]]);
   const [saving, setSaving]       = useState(false);
   const [innChecking, setInnChecking] = useState(false);
   const [innChecked, setInnChecked]   = useState(false);
@@ -280,11 +287,11 @@ export default function BeneficiaryCreateScreen() {
           </Field>
 
           <Field label="Абалы">
-            <Pills options={STATUSES} value={form.status} onChange={set('status')} />
+            <Pills options={statuses} value={form.status} onChange={set('status')} />
           </Field>
 
           <Field label="Муктаздыгы">
-            <Pills multi options={NEED_TYPES} value={form.needType} onChange={set('needType')} />
+            <Pills multi options={list('needType')} value={form.needType} onChange={set('needType')} />
           </Field>
 
           <Field label="Балдарынын саны">
@@ -304,7 +311,7 @@ export default function BeneficiaryCreateScreen() {
           </Field>
 
           <Field label="Кимдин карамагында">
-            <Pills options={GUARDIAN_TYPES} value={form.guardianType} onChange={set('guardianType')} />
+            <Pills options={guardianTypes} value={form.guardianType} onChange={set('guardianType')} />
           </Field>
 
           <Field label="Иштейт / Иштебейт">
@@ -312,7 +319,7 @@ export default function BeneficiaryCreateScreen() {
           </Field>
 
           <Field label="Ким жардам берет">
-            <Pills multi options={SUPPORT_SOURCES} value={form.supportSources} onChange={set('supportSources')} />
+            <Pills multi options={list('supportSources')} value={form.supportSources} onChange={set('supportSources')} />
           </Field>
 
           <Field label="Орточо айлык киреше (сом)">

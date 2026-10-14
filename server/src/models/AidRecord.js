@@ -3,11 +3,8 @@ const mongoose = require('mongoose');
 const aidRecordSchema = new mongoose.Schema({
   beneficiary: { type: mongoose.Schema.Types.ObjectId, ref: 'Beneficiary', required: true },
   foundation: { type: mongoose.Schema.Types.ObjectId, ref: 'Foundation' },
-  aidType: {
-    type: String,
-    enum: ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'],
-    required: true,
-  },
+  // Муктаждык категорияларынын бири (Category, group: 'needType')
+  aidType: { type: String, required: true },
   amount: { type: Number },
   description: { type: String, required: true },
   givenAt: { type: Date, default: Date.now },

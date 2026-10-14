@@ -7,10 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import api from '../../config/axios';
 import Spinner from '../../components/ui/Spinner';
-import StatusBadge from '../../components/ui/StatusBadge';
 import VerificationBadge from '../../components/ui/VerificationBadge';
 import { C } from '../../config/colors';
 import { VERIFICATION_STATUSES } from '../../utils/verificationStatus';
+import { useCategories } from '../../hooks/useCategories';
 
 const FILTERS = [
   { key: '', label: 'Баары' },
@@ -18,6 +18,8 @@ const FILTERS = [
 ];
 
 function BeneficiaryCard({ item, onPress }) {
+  const { colorOf } = useCategories();
+  const statusColor = colorOf('status', item.status);
   const initials = item.fullName?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
   return (
     <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.85}>
@@ -33,7 +35,11 @@ function BeneficiaryCard({ item, onPress }) {
       </View>
       <View style={s.cardRight}>
         <VerificationBadge value={item.verificationStatus} style={{ alignSelf: 'flex-end' }} />
-        <StatusBadge value={item.status} style={{ alignSelf: 'flex-end', marginTop: 4 }} />
+        {item.status ? (
+          <View style={[s.statusBadge, { backgroundColor: statusColor.bg }]}>
+            <Text style={[s.statusText, { color: statusColor.color }]}>{item.status}</Text>
+          </View>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -187,6 +193,8 @@ const s = StyleSheet.create({
   },
   cardLeft:  { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   cardRight: { alignItems: 'flex-end', marginLeft: 8 },
+  statusBadge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, marginTop: 4 },
+  statusText:  { fontSize: 11, fontWeight: '600' },
   avatar:    { width: 42, height: 42, borderRadius: 11, backgroundColor: C.primaryBg, justifyContent: 'center', alignItems: 'center' },
   avatarText:{ fontSize: 15, fontWeight: '700', color: C.primary },
   name:      { fontSize: 14, fontWeight: '700', color: C.text, marginBottom: 2 },

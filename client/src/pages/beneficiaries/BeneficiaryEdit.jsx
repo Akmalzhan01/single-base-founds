@@ -10,19 +10,13 @@ import { toNeedTypes } from '../../utils/needType';
 import ChildrenForm from '../../components/beneficiary/ChildrenForm';
 import LocationPicker from '../../components/beneficiary/LocationPicker';
 import Spinner from '../../components/ui/Spinner';
+import { useCategories } from '../../context/CategoriesContext';
 
-const STATUSES = ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'];
-const NEED_TYPES = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
 const CHILDREN_COUNTS = Array.from({ length: 12 }, (_, i) => String(i));
-const GUARDIAN_TYPES = ['Жалгыз', 'Эри', 'Аялы', 'Балдары', 'Башка'];
 const EMPLOYED_OPTIONS = [
   { value: '', label: '— Тандаңыз —' },
   { value: 'true', label: 'Иштейт' },
   { value: 'false', label: 'Иштебейт' },
-];
-const SUPPORT_SOURCES = [
-  'Пенсия алат', 'Пособия алат', 'Туугандары жардам берет',
-  'Кошуналар жардам берет', 'Фонддор жардам берет', 'Өзү иштейт', 'Жардам жок',
 ];
 // Массив талаалар FormData'га JSON болуп жөнөтүлөт
 const ARRAY_FIELDS = ['needType', 'supportSources'];
@@ -53,6 +47,7 @@ function Section({ title, children }) {
 export default function BeneficiaryEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { list } = useCategories();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [children, setChildren] = useState([]);
@@ -63,8 +58,8 @@ export default function BeneficiaryEdit() {
 
   const [form, setForm] = useState({
     inn: '', fullName: '', birthDate: '', address: '', phone: '',
-    status: 'Карыя', needType: ['Азык-түүлүк'], childrenCount: '0',
-    guardianType: 'Жалгыз', employed: '', comments: '',
+    status: '', needType: [], childrenCount: '0',
+    guardianType: '', employed: '', comments: '',
     supportSources: [], monthlyIncome: '',
     region: '', district: '', village: '',
     spouseRelation: '', spouseInn: '', spouseFullName: '',
@@ -83,10 +78,10 @@ export default function BeneficiaryEdit() {
           birthDate: fmt(d.birthDate),
           address: d.address || '',
           phone: d.phone || '',
-          status: d.status || 'Карыя',
+          status: d.status || '',
           needType: toNeedTypes(d.needType),
           childrenCount: String(d.childrenCount ?? 0),
-          guardianType: d.guardianType || 'Жалгыз',
+          guardianType: d.guardianType || '',
           employed: d.employed != null ? String(d.employed) : '',
           supportSources: Array.isArray(d.supportSources) ? d.supportSources : [],
           monthlyIncome: d.monthlyIncome != null ? String(d.monthlyIncome) : '',
@@ -173,20 +168,20 @@ export default function BeneficiaryEdit() {
           <div className="grid grid-cols-3 gap-4">
             <Input label="Адресс" value={form.address} onChange={set('address')} />
             <Input label="Телефон" type="tel" value={form.phone} onChange={set('phone')} />
-            <Select label="Абалы" value={form.status} onChange={set('status')} options={toOptions(STATUSES)} />
+            <Select label="Абалы" value={form.status} onChange={set('status')} options={[...(form.status ? [] : [{ value: '', label: '— Тандаңыз —' }]), ...toOptions(list('status', form.status))]} />
           </div>
 
           <ChipSelect
             label="Муктаздыгы"
             value={form.needType}
             onChange={(v) => setForm((f) => ({ ...f, needType: v }))}
-            options={toOptions(NEED_TYPES)}
+            options={toOptions(list('needType', form.needType))}
             hint="Бир нече вариант тандаса болот"
           />
 
           <div className="grid grid-cols-3 gap-4">
             <Select label="Балдарынын саны" value={form.childrenCount} onChange={set('childrenCount')} options={CHILDREN_COUNTS.map(v => ({ value: v, label: v }))} />
-            <Select label="Кимдин карамагында" value={form.guardianType} onChange={set('guardianType')} options={toOptions(GUARDIAN_TYPES)} />
+            <Select label="Кимдин карамагында" value={form.guardianType} onChange={set('guardianType')} options={[{ value: '', label: '— Тандаңыз —' }, ...toOptions(list('guardianType', form.guardianType))]} />
             <Select label="Иштейт / Иштебейт" value={form.employed} onChange={set('employed')} options={EMPLOYED_OPTIONS} />
           </div>
 
@@ -194,7 +189,7 @@ export default function BeneficiaryEdit() {
             label="Ким жардам берет"
             value={form.supportSources}
             onChange={(v) => setForm((f) => ({ ...f, supportSources: v }))}
-            options={toOptions(SUPPORT_SOURCES)}
+            options={toOptions(list('supportSources', form.supportSources))}
             hint="Бир нече вариант тандаса болот"
           />
 

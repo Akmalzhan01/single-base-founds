@@ -1,6 +1,7 @@
 const AidRecord = require('../models/AidRecord');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const { assertCategories } = require('../services/categoryService');
 
 // GET /api/aid-records
 exports.getAll = catchAsync(async (req, res) => {
@@ -27,6 +28,7 @@ exports.getAll = catchAsync(async (req, res) => {
 exports.create = catchAsync(async (req, res) => {
   const data = { ...req.body, foundation: req.foundation?._id, givenBy: req.user._id };
   if (req.file) data.photo = req.file.path;
+  await assertCategories('needType', data.aidType);
 
   const record = await AidRecord.create(data);
 

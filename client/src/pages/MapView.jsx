@@ -5,6 +5,7 @@ import api from '../config/axios';
 import Spinner from '../components/ui/Spinner';
 import { MapPin } from 'lucide-react';
 import { toNeedTypes, needTypeLabel } from '../utils/needType';
+import { useCategories } from '../context/CategoriesContext';
 
 // Leaflet default icon fix (Vite uchun)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -12,15 +13,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
-
-const needColors = {
-  'Азык-түүлүк': '#f59e0b',
-  'Дары-дармек': '#3b82f6',
-  'Акча': '#10b981',
-  'Кийим': '#8b5cf6',
-  'Мэбел': '#f97316',
-  'Башка': '#94a3b8',
-};
 
 const cardStyle = {
   background: '#fff',
@@ -31,6 +23,8 @@ const cardStyle = {
 export default function MapView() {
   const [data, setData] = useState({ pins: [], regions: [] });
   const [loading, setLoading] = useState(true);
+  const { list, hexOf } = useCategories();
+  const pinColor = (pin) => hexOf('needType', toNeedTypes(pin.needType)[0]);
 
   useEffect(() => {
     api.get('/dashboard/map')
@@ -67,9 +61,9 @@ export default function MapView() {
 
         {/* Legend */}
         <div className="flex flex-wrap gap-3">
-          {Object.entries(needColors).map(([label, color]) => (
+          {list('needType').map((label) => (
             <div key={label} className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: hexOf('needType', label) }} />
               <span className="text-[11px] text-slate-500">{label}</span>
             </div>
           ))}
@@ -97,7 +91,7 @@ export default function MapView() {
                 pathOptions={{
                   color: '#fff',
                   weight: 2,
-                  fillColor: needColors[toNeedTypes(pin.needType)[0]] || '#94a3b8',
+                  fillColor: pinColor(pin),
                   fillOpacity: 0.9,
                 }}
               >
@@ -111,7 +105,7 @@ export default function MapView() {
                     </p>
                     <span style={{
                       display: 'inline-block',
-                      background: needColors[toNeedTypes(pin.needType)[0]] || '#94a3b8',
+                      background: pinColor(pin),
                       color: '#fff',
                       fontSize: 11,
                       fontWeight: 600,

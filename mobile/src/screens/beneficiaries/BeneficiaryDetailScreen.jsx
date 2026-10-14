@@ -16,6 +16,7 @@ import Spinner from '../../components/ui/Spinner';
 import VerificationBadge from '../../components/ui/VerificationBadge';
 import { C } from '../../config/colors';
 import { toNeedTypes } from '../../utils/needType';
+import { useCategories } from '../../hooks/useCategories';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -32,19 +33,12 @@ function getInitials(name = '') {
   return (name || '').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 }
 
-// ─── Type colors ──────────────────────────────────────────────
-const TYPE_COLORS = {
-  'Азык-түүлүк': { bg: '#f0fdf4', color: '#16a34a' },
-  'Дары-дармек': { bg: '#eff6ff', color: '#3b82f6' },
-  'Акча':        { bg: '#fffbeb', color: '#d97706' },
-  'Кийим':       { bg: '#faf5ff', color: '#9333ea' },
-  'Мэбел':       { bg: '#f8fafc', color: '#64748b' },
-  'Башка':       { bg: '#f8fafc', color: '#64748b' },
-};
-
-function Badge({ label, bg = '#f1f5f9', color = '#64748b' }) {
+// ─── Badge ────────────────────────────────────────────────────
+// group берилсе — түсү категориядан (суперадмин тандаган) алынат
+function Badge({ label, group, bg = '#f1f5f9', color = '#64748b' }) {
+  const { colorOf } = useCategories();
   if (!label) return null;
-  const cfg = TYPE_COLORS[label] || { bg, color };
+  const cfg = group ? colorOf(group, label) : { bg, color };
   return (
     <View style={{ backgroundColor: cfg.bg, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start' }}>
       <Text style={{ fontSize: 11, fontWeight: '600', color: cfg.color }}>{label}</Text>
@@ -98,7 +92,7 @@ function AidAccordion({ item, isLast, onZoom }) {
     <View style={{ borderBottomWidth: isLast ? 0 : 1, borderBottomColor: C.borderLight }}>
       <TouchableOpacity style={s.aidHeader} onPress={() => setOpen(o => !o)} activeOpacity={0.7}>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Badge label={item.aidType || 'Жардам'} />
+          <Badge label={item.aidType || 'Жардам'} group="needType" />
           {item.amount > 0 && (
             <Text style={{ fontSize: 13, fontWeight: '700', color: '#10b981' }}>
               {Number(item.amount).toLocaleString()} сом
@@ -282,11 +276,11 @@ function HistoryTimeline({ history }) {
 }
 
 // ─── Add Aid Modal ────────────────────────────────────────────
-const AID_TYPES = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
-
 function AidAddModal({ beneficiaryId, onClose, onSaved }) {
+  const { list } = useCategories();
+  const aidTypes = list('needType');
   const [form, setForm] = useState({
-    aidType: 'Азык-түүлүк', amount: '', description: '', notes: '',
+    aidType: aidTypes[0] || '', amount: '', description: '', notes: '',
     givenAt: new Date().toISOString().split('T')[0],
   });
   const [photo, setPhoto] = useState(null);
@@ -369,7 +363,7 @@ function AidAddModal({ beneficiaryId, onClose, onSaved }) {
                 onValueChange={v => setForm(p => ({ ...p, aidType: v }))}
                 style={{ color: C.text }}
               >
-                {AID_TYPES.map(t => <Picker.Item key={t} label={t} value={t} />)}
+                {aidTypes.map(t => <Picker.Item key={t} label={t} value={t} />)}
               </Picker>
             </View>
 
@@ -582,9 +576,9 @@ export default function BeneficiaryDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 17, fontWeight: '800', color: C.text, marginBottom: 6 }}>{data.fullName}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                {toNeedTypes(data.needType).map(n => <Badge key={n} label={n} />)}
-                {data.status      && <Badge label={data.status} bg="#f1f5f9" color="#64748b" />}
-                {data.guardianType && <Badge label={data.guardianType} bg={C.blueBg} color={C.blue} />}
+                {toNeedTypes(data.needType).map(n => <Badge key={n} label={n} group="needType" />)}
+                {data.status      && <Badge label={data.status} group="status" />}
+                {data.guardianType && <Badge label={data.guardianType} group="guardianType" />}
               </View>
             </View>
             <VerificationBadge

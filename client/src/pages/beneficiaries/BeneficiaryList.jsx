@@ -9,14 +9,7 @@ import Pagination from '../../components/ui/Pagination';
 import { toNeedTypes } from '../../utils/needType';
 import { VERIFICATION_STATUSES } from '../../utils/verificationStatus';
 import VerificationBadge from '../../components/beneficiary/VerificationBadge';
-
-const needColors = {
-  'Азык-түүлүк': 'green', 'Дары-дармек': 'blue', 'Акча': 'yellow',
-  'Кийим': 'purple', 'Мэбел': 'gray', 'Башка': 'gray',
-};
-
-const NEED_TYPES = ['', 'Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
-const STATUSES = ['', 'Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'];
+import { useCategories } from '../../context/CategoriesContext';
 const REGIONS = ['', 'Бишкек ш.', 'Ош ш.', 'Чүй', 'Ош', 'Жалал-Абад', 'Баткен', 'Нарын', 'Талас', 'Ысык-Көл'];
 
 const avatarColors = [
@@ -41,6 +34,7 @@ const cardStyle = {
 
 export default function BeneficiaryList() {
   const navigate = useNavigate();
+  const { list, colorOf } = useCategories();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -141,7 +135,7 @@ export default function BeneficiaryList() {
           className="rounded-xl px-3 py-2 text-[13px] outline-none transition-all cursor-pointer"
           style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569' }}
         >
-          {STATUSES.map((v) => (
+          {['', ...list('status', filters.status)].map((v) => (
             <option key={v} value={v}>{v || 'Бардык абалдар'}</option>
           ))}
         </select>
@@ -151,7 +145,7 @@ export default function BeneficiaryList() {
           className="rounded-xl px-3 py-2 text-[13px] outline-none transition-all cursor-pointer"
           style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569' }}
         >
-          {NEED_TYPES.map((v) => (
+          {['', ...list('needType', filters.needType)].map((v) => (
             <option key={v} value={v}>{v || 'Бардык муктаздыктар'}</option>
           ))}
         </select>
@@ -218,11 +212,13 @@ export default function BeneficiaryList() {
                     <td className="px-4 py-3.5">
                       <div className="flex flex-wrap gap-1">
                         {toNeedTypes(b.needType).map((n) => (
-                          <Badge key={n} color={needColors[n] || 'gray'}>{n}</Badge>
+                          <Badge key={n} color={colorOf('needType', n)}>{n}</Badge>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-slate-400 text-[12px]">{b.status}</td>
+                    <td className="px-4 py-3.5">
+                      {b.status ? <Badge color={colorOf('status', b.status)}>{b.status}</Badge> : <span className="text-slate-300">—</span>}
+                    </td>
                     <td className="px-4 py-3.5">
                       <VerificationBadge value={b.verificationStatus} />
                     </td>

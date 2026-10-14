@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, UserPlus, Building2, LogOut, Search, ChevronRight, Map, Bell, UserCircle, Shield, Settings, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, UserPlus, Building2, LogOut, Search, ChevronRight, Map, Bell, UserCircle, Shield, Settings, BookOpen, Tags } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
 
 const adminItems = [
   { to: '/foundations', icon: Building2, label: 'Фонддор' },
+  { to: '/categories', icon: Tags, label: 'Категориялар' },
   { to: '/audit', icon: Shield, label: 'Аудит лог' },
 ];
 

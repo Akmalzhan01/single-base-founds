@@ -5,6 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { generateBeneficiaryPDF } = require('../services/pdfService');
 const audit = require('../utils/audit');
+const { assertBeneficiaryCategories, firstActive } = require('../services/categoryService');
 
 const TRACKED_FIELDS = [
   'verificationStatus', 'status', 'needType', 'fullName', 'address', 'phone', 'birthDate',
@@ -160,6 +161,8 @@ exports.create = catchAsync(async (req, res) => {
   if (req.file) data.photo = req.file.path;
 
   normalizeBody(data);
+  if (!data.status) data.status = await firstActive('status');
+  await assertBeneficiaryCategories(data);
 
   const beneficiary = await Beneficiary.create(data);
   await beneficiary.populate('registeredBy', 'name');
@@ -198,6 +201,7 @@ exports.update = catchAsync(async (req, res, next) => {
   if (req.file) data.photo = req.file.path;
 
   normalizeBody(data);
+  await assertBeneficiaryCategories(data);
 
   // Compute field-level diff for tracked fields
   const changes = [];

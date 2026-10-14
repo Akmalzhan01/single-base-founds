@@ -28,11 +28,9 @@ const beneficiarySchema = new mongoose.Schema({
   birthDate: { type: Date },
   address: { type: String },
   phone: { type: String },
-  status: {
-    type: String,
-    enum: ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'],
-    default: 'Карыя',
-  },
+  // status, needType, guardianType, supportSources — маанилери Category коллекциясынан
+  // (суперадмин башкарат), текшерүү контроллерде: services/categoryService.js
+  status: { type: String },
   // Текшерүү абалы — фонддор муктажды текшергенден кийин белгилейт
   verificationStatus: {
     type: String,
@@ -40,27 +38,13 @@ const beneficiarySchema = new mongoose.Schema({
     default: 'Текшерилбеген',
   },
   // Бир нече муктаздык тандалышы мүмкүн
-  needType: {
-    type: [String],
-    enum: ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'],
-    default: () => ['Азык-түүлүк'],
-  },
+  needType: { type: [String], default: () => [] },
   childrenCount: { type: Number, default: 0 },
-  guardianType: {
-    type: String,
-    enum: ['Жалгыз', 'Эри', 'Аялы', 'Балдары', 'Башка'],
-  },
+  guardianType: { type: String },
   employed: { type: Boolean },
 
   // Ким жардам берет — бир нече булак болушу мүмкүн
-  supportSources: {
-    type: [String],
-    enum: [
-      'Пенсия алат', 'Пособия алат', 'Туугандары жардам берет',
-      'Кошуналар жардам берет', 'Фонддор жардам берет', 'Өзү иштейт', 'Жардам жок',
-    ],
-    default: () => [],
-  },
+  supportSources: { type: [String], default: () => [] },
   // Орточо айлык киреше (сом)
   monthlyIncome: { type: Number, min: 0 },
 

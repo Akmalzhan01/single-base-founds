@@ -10,19 +10,13 @@ import DuplicateAlert from '../../components/beneficiary/DuplicateAlert';
 import ChildrenForm from '../../components/beneficiary/ChildrenForm';
 import LocationPicker from '../../components/beneficiary/LocationPicker';
 import { CheckCircle2, Loader2 } from 'lucide-react';
+import { useCategories } from '../../context/CategoriesContext';
 
-const STATUSES = ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'];
-const NEED_TYPES = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
 const CHILDREN_COUNTS = Array.from({ length: 12 }, (_, i) => String(i));
-const GUARDIAN_TYPES = ['Жалгыз', 'Эри', 'Аялы', 'Балдары', 'Башка'];
 const EMPLOYED_OPTIONS = [
   { value: '', label: '— Тандаңыз —' },
   { value: 'true', label: 'Иштейт' },
   { value: 'false', label: 'Иштебейт' },
-];
-const SUPPORT_SOURCES = [
-  'Пенсия алат', 'Пособия алат', 'Туугандары жардам берет',
-  'Кошуналар жардам берет', 'Фонддор жардам берет', 'Өзү иштейт', 'Жардам жок',
 ];
 // Массив талаалар FormData'га JSON болуп жөнөтүлөт
 const ARRAY_FIELDS = ['needType', 'supportSources'];
@@ -51,6 +45,7 @@ function Section({ title, children }) {
 
 export default function BeneficiaryCreate() {
   const navigate = useNavigate();
+  const { list } = useCategories();
   const [loading, setLoading] = useState(false);
   const [innChecking, setInnChecking] = useState(false);
   const [duplicate, setDuplicate] = useState(null);
@@ -66,8 +61,8 @@ export default function BeneficiaryCreate() {
 
   const [form, setForm] = useState({
     inn: '', fullName: '', birthDate: '', address: '', phone: '',
-    status: 'Карыя', needType: ['Азык-түүлүк'], childrenCount: '0',
-    guardianType: 'Жалгыз', employed: '', comments: '',
+    status: '', needType: [], childrenCount: '0',
+    guardianType: '', employed: '', comments: '',
     supportSources: [], monthlyIncome: '',
     region: '', district: '', village: '',
     spouseRelation: '', spouseInn: '', spouseFullName: '',
@@ -77,6 +72,18 @@ export default function BeneficiaryCreate() {
   });
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const statuses = list('status');
+  const guardianTypes = list('guardianType');
+
+  // Категориялар жүктөлгөндөн кийин бир тандоочу талааларга биринчи маанини коёбуз
+  useEffect(() => {
+    setForm((f) => ({
+      ...f,
+      status: f.status || statuses[0] || '',
+      guardianType: f.guardianType || guardianTypes[0] || '',
+    }));
+  }, [statuses[0], guardianTypes[0]]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkInn = useCallback(async (inn) => {
     if (inn.length < 6) return;
@@ -190,20 +197,20 @@ export default function BeneficiaryCreate() {
           <div className="grid grid-cols-3 gap-4">
             <Input label="Адресс" placeholder="Дареги" value={form.address} onChange={set('address')} />
             <Input label="Телефон" type="tel" placeholder="+996..." value={form.phone} onChange={set('phone')} />
-            <Select label="Абалы" value={form.status} onChange={set('status')} options={toOptions(STATUSES)} />
+            <Select label="Абалы" value={form.status} onChange={set('status')} options={toOptions(statuses)} />
           </div>
 
           <ChipSelect
             label="Муктаздыгы"
             value={form.needType}
             onChange={(v) => setForm((f) => ({ ...f, needType: v }))}
-            options={toOptions(NEED_TYPES)}
+            options={toOptions(list('needType'))}
             hint="Бир нече вариант тандаса болот"
           />
 
           <div className="grid grid-cols-3 gap-4">
             <Select label="Балдарынын саны" value={form.childrenCount} onChange={set('childrenCount')} options={CHILDREN_COUNTS.map(v => ({ value: v, label: v }))} />
-            <Select label="Кимдин карамагында" value={form.guardianType} onChange={set('guardianType')} options={toOptions(GUARDIAN_TYPES)} />
+            <Select label="Кимдин карамагында" value={form.guardianType} onChange={set('guardianType')} options={toOptions(guardianTypes)} />
             <Select label="Иштейт / Иштебейт" value={form.employed} onChange={set('employed')} options={EMPLOYED_OPTIONS} />
           </div>
 
@@ -211,7 +218,7 @@ export default function BeneficiaryCreate() {
             label="Ким жардам берет"
             value={form.supportSources}
             onChange={(v) => setForm((f) => ({ ...f, supportSources: v }))}
-            options={toOptions(SUPPORT_SOURCES)}
+            options={toOptions(list('supportSources'))}
             hint="Бир нече вариант тандаса болот"
           />
 

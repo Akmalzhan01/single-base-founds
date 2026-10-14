@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { toNeedTypes } from '../../utils/needType';
 import VerificationBadge from '../../components/beneficiary/VerificationBadge';
+import { useCategories } from '../../context/CategoriesContext';
 
 const avatarColors = [
   ['#3b82f6', '#6366f1'], ['#a855f7', '#7c3aed'], ['#f43f5e', '#db2777'],
@@ -28,13 +29,9 @@ const cardStyle = {
   border: '1px solid rgba(0,0,0,0.04)',
 };
 
-const needColors = {
-  'Азык-түүлүк': 'green', 'Дары-дармек': 'blue', 'Акча': 'yellow',
-  'Кийим': 'purple', 'Мэбел': 'gray', 'Башка': 'gray',
-};
-
 function AidAccordion({ rec, isLast }) {
   const [open, setOpen] = useState(false);
+  const { colorOf } = useCategories();
   return (
     <div style={{ borderBottom: !isLast ? '1px solid #f8fafc' : 'none' }}>
       {/* Header — always visible */}
@@ -46,7 +43,7 @@ function AidAccordion({ rec, isLast }) {
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
         <div className="flex-1 flex items-center gap-2 flex-wrap min-w-0">
-          <Badge color={needColors[rec.aidType] || 'gray'}>{rec.aidType}</Badge>
+          <Badge color={colorOf('needType', rec.aidType)}>{rec.aidType}</Badge>
           {rec.amount > 0 && (
             <span className="text-[13px] font-semibold" style={{ color: '#10b981' }}>
               {rec.amount.toLocaleString()} сом
@@ -237,6 +234,7 @@ export default function BeneficiaryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { colorOf } = useCategories();
   const [data, setData] = useState(null);
   const [aidRecords, setAidRecords] = useState([]);
   const [history, setHistory] = useState([]);
@@ -386,10 +384,10 @@ export default function BeneficiaryDetail() {
           <div className="flex-1 min-w-0 space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
               {toNeedTypes(data.needType).map((n) => (
-                <Badge key={n} color={needColors[n] || 'gray'}>{n}</Badge>
+                <Badge key={n} color={colorOf('needType', n)}>{n}</Badge>
               ))}
-              <Badge color="gray">{data.status}</Badge>
-              {data.guardianType && <Badge color="blue">{data.guardianType}</Badge>}
+              {data.status && <Badge color={colorOf('status', data.status)}>{data.status}</Badge>}
+              {data.guardianType && <Badge color={colorOf('guardianType', data.guardianType)}>{data.guardianType}</Badge>}
               {data.employed != null && (
                 <Badge color={data.employed ? 'green' : 'gray'}>
                   {data.employed ? 'Иштейт' : 'Иштебейт'}
@@ -439,7 +437,7 @@ export default function BeneficiaryDetail() {
                 <HandHeart size={12} className="text-slate-300 shrink-0 mt-1" />
                 <div className="flex flex-wrap gap-1.5">
                   {data.supportSources.map((src) => (
-                    <Badge key={src} color="blue">{src}</Badge>
+                    <Badge key={src} color={colorOf('supportSources', src)}>{src}</Badge>
                   ))}
                 </div>
               </div>

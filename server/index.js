@@ -5,12 +5,15 @@ const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const path = require('path');
 const connectDB = require('./src/config/db');
+const Category = require('./src/models/Category');
 const { initBot } = require('./src/services/telegramBot');
 
 const app = express();
 
 // DB
-connectDB();
+connectDB().then(() =>
+  Category.ensureDefaults().catch((err) => console.error('Category defaults error:', err.message))
+);
 
 // Middleware
 app.use(compression());
@@ -31,6 +34,7 @@ app.use('/api/notices', require('./src/routes/noticeRoutes'));
 app.use('/api/audit', require('./src/routes/auditRoutes'));
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/posts', require('./src/routes/postRoutes'));
+app.use('/api/categories', require('./src/routes/categoryRoutes'));
 
 // Serve React client in production
 if (process.env.NODE_ENV === 'production') {

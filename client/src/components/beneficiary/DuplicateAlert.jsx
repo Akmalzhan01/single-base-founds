@@ -4,18 +4,11 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { toNeedTypes } from '../../utils/needType';
 import VerificationBadge from './VerificationBadge';
-
-const needColors = {
-  'Азык-түүлүк': 'green',
-  'Дары-дармек': 'blue',
-  'Акча': 'yellow',
-  'Кийим': 'purple',
-  'Мэбел': 'gray',
-  'Башка': 'gray',
-};
+import { useCategories } from '../../context/CategoriesContext';
 
 export default function DuplicateAlert({ data, aidRecords, onContinue, onCancel }) {
   const [showAid, setShowAid] = useState(false);
+  const { colorOf } = useCategories();
 
   return (
     <div className="rounded-xl border-2 border-yellow-400 bg-yellow-50 p-5 space-y-4">
@@ -36,7 +29,7 @@ export default function DuplicateAlert({ data, aidRecords, onContinue, onCancel 
           <span className="font-medium text-gray-800">{data.fullName}</span>
           <VerificationBadge value={data.verificationStatus} />
           {toNeedTypes(data.needType).map((n) => (
-            <Badge key={n} color={needColors[n] || 'gray'}>{n}</Badge>
+            <Badge key={n} color={colorOf('needType', n)}>{n}</Badge>
           ))}
         </div>
         {data.phone && (

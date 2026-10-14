@@ -1,6 +1,12 @@
 const TelegramBot = require('node-telegram-bot-api');
 const Beneficiary = require('../models/Beneficiary');
 const AidRecord = require('../models/AidRecord');
+const Category = require('../models/Category');
+const { firstActive } = require('./categoryService');
+
+const activeNeedTypes = async () =>
+  (await Category.find({ group: 'needType', isActive: true }).sort({ order: 1, name: 1 }).lean())
+    .map((c) => c.name);
 
 let bot;
 
@@ -100,11 +106,13 @@ const initBot = () => {
     } else if (session.step === 'phone') {
       session.phone = text.trim();
       session.step = 'needType';
-      bot.sendMessage(chatId, 'Муктаждыгын тандаңыз:\n1 — Азык-түүлүк\n2 — Дары-дармек\n3 — Акча\n4 — Кийим\n5 — Башка');
+      session.needTypes = await activeNeedTypes();
+      const menu = session.needTypes.map((t, i) => `${i + 1} — ${t}`).join('\n');
+      bot.sendMessage(chatId, `Муктаждыгын тандаңыз:\n${menu}`);
 
     } else if (session.step === 'needType') {
-      const types = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Башка'];
-      session.needType = types[parseInt(text) - 1] || 'Башка';
+      const types = session.needTypes || [];
+      session.needType = types[parseInt(text) - 1] || types[types.length - 1];
       session.step = 'confirm';
       bot.sendMessage(
         chatId,
@@ -118,7 +126,8 @@ const initBot = () => {
             inn: session.inn,
             fullName: session.fullName,
             phone: session.phone,
-            needType: [session.needType],
+            needType: session.needType ? [session.needType] : [],
+            status: await firstActive('status'),
             registeredBy: process.env.DEFAULT_FOUNDATION_ID,
           });
           bot.sendMessage(chatId, '✅ Муктаж ийгиликтүү катталды!');

@@ -6,12 +6,13 @@ import Select from '../../components/ui/Select';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import toast from 'react-hot-toast';
-
-const AID_TYPES = ['Азык-түүлүк', 'Дары-дармек', 'Акча', 'Кийим', 'Мэбел', 'Башка'];
+import { useCategories } from '../../context/CategoriesContext';
 
 export default function AidModal({ beneficiaryId, onClose, onSaved }) {
+  const { list } = useCategories();
+  const aidTypes = list('needType');
   const [form, setForm] = useState({
-    aidType: 'Азык-түүлүк', amount: '', description: '', notes: '',
+    aidType: aidTypes[0] || '', amount: '', description: '', notes: '',
     givenAt: new Date().toISOString().split('T')[0],
   });
   const [photo, setPhoto] = useState(null);
@@ -56,7 +57,7 @@ export default function AidModal({ beneficiaryId, onClose, onSaved }) {
   return (
     <Modal open onClose={onClose} title="Жардам жазуу">
       <div className="space-y-4">
-        <Select label="Жардамдын түрү" value={form.aidType} onChange={set('aidType')} options={AID_TYPES.map(v => ({ value: v, label: v }))} />
+        <Select label="Жардамдын түрү" value={form.aidType} onChange={set('aidType')} options={aidTypes.map(v => ({ value: v, label: v }))} />
         <Input label="Суммасы (сом)" type="number" placeholder="0" value={form.amount} onChange={set('amount')} />
 
         <div className="flex flex-col gap-1.5">
