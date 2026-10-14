@@ -138,7 +138,7 @@ export default function AuditLog() {
       )}
 
       {Math.ceil(total / 30) > 1 && (
-        <Pagination page={page} pages={Math.ceil(total / 30)} onChange={setPage} />
+        <Pagination page={page} pages={Math.ceil(total / 30)} total={total} limit={30} onChange={setPage} />
       )}
     </div>
   );

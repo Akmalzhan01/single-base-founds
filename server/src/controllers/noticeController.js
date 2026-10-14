@@ -4,10 +4,12 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { notifyFoundation } = require('../services/telegramBot');
 const audit = require('../utils/audit');
+const { parsePaging, pageMeta } = require('../utils/pagination');
 
 // GET /api/notices
 exports.getAll = catchAsync(async (req, res) => {
-  const { status, region, priority, search, page = 1, limit = 20 } = req.query;
+  const { status, region, priority, search } = req.query;
+  const { page, limit, skip } = parsePaging(req.query);
   const filter = {};
   if (status) filter.status = status;
   if (region) filter.region = region;
@@ -20,19 +22,18 @@ exports.getAll = catchAsync(async (req, res) => {
     ];
   }
 
-  const skip = (page - 1) * limit;
   const [notices, total] = await Promise.all([
     Notice.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit))
+      .limit(limit)
       .populate('createdBy', 'name')
       .populate('createdByFoundation', 'name')
       .populate('beneficiary', 'fullName inn'),
     Notice.countDocuments(filter),
   ]);
 
-  res.status(200).json({ success: true, data: notices, total, page: Number(page) });
+  res.status(200).json({ success: true, data: notices, ...pageMeta(total, page, limit) });
 });
 
 // GET /api/notices/:id

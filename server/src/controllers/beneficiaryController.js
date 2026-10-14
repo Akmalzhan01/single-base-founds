@@ -5,6 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { generateBeneficiaryPDF } = require('../services/pdfService');
 const audit = require('../utils/audit');
+const { parsePaging, pageMeta } = require('../utils/pagination');
 const { assertBeneficiaryCategories, firstActive } = require('../services/categoryService');
 
 const TRACKED_FIELDS = [
@@ -84,21 +85,42 @@ const normalizeBody = (data) => {
 const fmtField = (field, v) =>
   FIELD_FORMATTERS[field] ? FIELD_FORMATTERS[field](v) : fmtValue(v);
 
-// GET /api/beneficiaries
-exports.getAll = catchAsync(async (req, res) => {
-  const { search, status, verificationStatus, needType, region, district, page = 1, limit = 20 } = req.query;
+const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// Жардам боюнча чыпка:
+//   received     — жок дегенде бир жолу жардам алгандар
+//   never        — эч качан жардам албагандар
+//   within:N     — акыркы N күндө жардам алгандар
+//   notWithin:N  — акыркы N күндө жардам албагандар (эч албагандар да кирет)
+const aidFilter = async (aid) => {
+  if (!aid) return null;
+  const [mode, rawDays] = String(aid).split(':');
+  if (mode === 'received') return { $in: await AidRecord.distinct('beneficiary') };
+  if (mode === 'never') return { $nin: await AidRecord.distinct('beneficiary') };
+
+  // Күн саны туура эмес болсо — чыпка колдонулбайт
+  const days = /^\d+$/.test(rawDays || '') ? Math.min(3650, Number(rawDays)) : 0;
+  if (!days) return null;
+  const recent = await AidRecord.distinct('beneficiary', {
+    givenAt: { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) },
+  });
+
+  if (mode === 'within') return { $in: recent };
+  if (mode === 'notWithin') return { $nin: recent };
+  return null;
+};
+
+// Тизме жана экспорт үчүн жалпы чыпка
+const buildFilter = async (query) => {
+  const { search, status, verificationStatus, needType, region, district, aid } = query;
   const filter = {};
 
   if (search) {
+    const rx = { $regex: escapeRegex(search.trim()), $options: 'i' };
     filter.$or = [
-      { fullName: { $regex: search, $options: 'i' } },
-      { inn: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } },
-      { 'spouse.inn': { $regex: search, $options: 'i' } },
-      { 'spouse.fullName': { $regex: search, $options: 'i' } },
-      { 'children.inn': { $regex: search, $options: 'i' } },
-      { 'children.fullName': { $regex: search, $options: 'i' } },
+      { fullName: rx }, { inn: rx }, { phone: rx },
+      { 'spouse.inn': rx }, { 'spouse.fullName': rx },
+      { 'children.inn': rx }, { 'children.fullName': rx },
     ];
   }
 
@@ -108,21 +130,42 @@ exports.getAll = catchAsync(async (req, res) => {
   if (region) filter.region = region;
   if (district) filter.district = district;
 
-  const skip = (Number(page) - 1) * Number(limit);
-  const total = await Beneficiary.countDocuments(filter);
-  const beneficiaries = await Beneficiary.find(filter)
-    .populate('registeredBy', 'name')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(Number(limit));
+  const byAid = await aidFilter(aid);
+  if (byAid) filter._id = byAid;
 
-  res.status(200).json({
-    success: true,
-    total,
-    page: Number(page),
-    pages: Math.ceil(total / Number(limit)),
-    data: beneficiaries,
+  return filter;
+};
+
+// Ар бир муктаждын акыркы жардам күнү жана жардамдар саны
+const aidSummary = async (ids) => {
+  const rows = await AidRecord.aggregate([
+    { $match: { beneficiary: { $in: ids } } },
+    { $group: { _id: '$beneficiary', lastAidAt: { $max: '$givenAt' }, aidCount: { $sum: 1 } } },
+  ]);
+  return new Map(rows.map((r) => [String(r._id), r]));
+};
+
+// GET /api/beneficiaries
+exports.getAll = catchAsync(async (req, res) => {
+  const { page, limit, skip } = parsePaging(req.query);
+  const filter = await buildFilter(req.query);
+
+  const [total, beneficiaries] = await Promise.all([
+    Beneficiary.countDocuments(filter),
+    Beneficiary.find(filter)
+      .populate('registeredBy', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+  ]);
+
+  const summary = await aidSummary(beneficiaries.map((b) => b._id));
+  const data = beneficiaries.map((b) => {
+    const s = summary.get(String(b._id));
+    return { ...b.toJSON(), lastAidAt: s?.lastAidAt || null, aidCount: s?.aidCount || 0 };
   });
+
+  res.status(200).json({ success: true, ...pageMeta(total, page, limit), data });
 });
 
 // POST /api/beneficiaries/check-inn  — DUPLICATE CHECK
@@ -259,26 +302,14 @@ exports.remove = catchAsync(async (req, res, next) => {
 
 // GET /api/beneficiaries/export  — JSON export (client generates XLSX)
 exports.exportCsv = catchAsync(async (req, res) => {
-  const { search, status, verificationStatus, needType, region, district } = req.query;
-  const filter = {};
-
-  if (search) {
-    filter.$or = [
-      { fullName: { $regex: search, $options: 'i' } },
-      { inn: { $regex: search, $options: 'i' } },
-    ];
-  }
-  if (status) filter.status = status;
-  if (verificationStatus) filter.verificationStatus = verificationFilter(verificationStatus);
-  if (needType) filter.needType = needType;
-  if (region) filter.region = region;
-  if (district) filter.district = district;
+  const filter = await buildFilter(req.query);
 
   const beneficiaries = await Beneficiary.find(filter)
     .populate('registeredBy', 'name')
     .sort({ createdAt: -1 })
     .lean();
 
+  const summary = await aidSummary(beneficiaries.map((b) => b._id));
   const rows = beneficiaries.map(b => ({
     inn:           b.inn || '',
     fullName:      b.fullName || '',
@@ -295,6 +326,8 @@ exports.exportCsv = catchAsync(async (req, res) => {
     supportSources: fmtValue(b.supportSources),
     monthlyIncome: b.monthlyIncome ?? '',
     childrenCount: b.childrenCount ?? '',
+    aidCount:      summary.get(String(b._id))?.aidCount || 0,
+    lastAidAt:     summary.get(String(b._id))?.lastAidAt ? new Date(summary.get(String(b._id)).lastAidAt).toLocaleDateString('ru-RU') : '',
     foundation:    b.registeredBy?.name || '',
     createdAt:     new Date(b.createdAt).toLocaleDateString('ru-RU'),
   }));

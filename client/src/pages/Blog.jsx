@@ -1,9 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Megaphone, Newspaper, Trophy, Pencil, Trash2, X, Image, Heart, MessageCircle, Send, Trash, Eye, Share2 } from 'lucide-react';
 import api from '../config/axios';
 import { useAuth } from '../context/AuthContext';
 import Spinner from '../components/ui/Spinner';
+import Pagination from '../components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 import toast from 'react-hot-toast';
 import { renderMarkdown } from '../utils/markdown';
 
@@ -356,8 +359,20 @@ export default function Blog() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [stats, setStats] = useState({ byType: {}, likes: 0, views: 0 });
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState('');
+  // Барак жана түр URL'да — постту ачып артка кайтканда ошол эле баракка келет
+  const [params, setParams] = useSearchParams();
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const filterType = params.get('type') || '';
+  const setQuery = (patch) => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    Object.entries(patch).forEach(([k, v]) => (v ? next.set(k, String(v)) : next.delete(k)));
+    return next;
+  }, { replace: true });
+  const setPage = (p) => setQuery({ page: p > 1 ? p : '' });
+  const setFilterType = (t) => setQuery({ type: t, page: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [editPost, setEditPost] = useState(null);
   const [expanded, setExpanded] = useState(null);
@@ -365,22 +380,29 @@ export default function Blog() {
 
   const load = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (filterType) params.set('type', filterType);
-    api.get(`/posts?${params}`)
-      .then(r => { setPosts(r.data.data); setTotal(r.data.total); })
+    const query = new URLSearchParams({ page, limit: PAGE_SIZE });
+    if (filterType) query.set('type', filterType);
+    api.get(`/posts?${query}`)
+      .then(r => {
+        if (page > r.data.pages) return setPage(r.data.pages);
+        setPosts(r.data.data);
+        setTotal(r.data.total);
+        setPages(r.data.pages);
+        if (r.data.stats) setStats(r.data.stats);
+      })
       .catch(() => toast.error('Жүктөлгөн жок'))
       .finally(() => setLoading(false));
-  }, [filterType]);
+  }, [filterType, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load(); }, [load]);
 
   const handleSaved = (post, isEdit) => {
     if (isEdit) {
       setPosts(p => p.map(x => x._id === post._id ? post : x));
+    } else if (page !== 1) {
+      setPage(1); // жаңы пост биринчи баракта
     } else {
-      setPosts(p => [post, ...p]);
-      setTotal(t => t + 1);
+      load();
     }
   };
 
@@ -388,8 +410,7 @@ export default function Blog() {
     if (!confirm('Постту өчүрөсүзбү?')) return;
     try {
       await api.delete(`/posts/${id}`);
-      setPosts(p => p.filter(x => x._id !== id));
-      setTotal(t => t - 1);
+      load(); // барак кайра толсун (кийинки барактагы пост жылып келет)
       toast.success('Өчүрүлдү');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Ката кетти');
@@ -423,8 +444,9 @@ export default function Blog() {
   const isOwner = (post) => user?.isSuperadmin || String(post.foundation?._id) === String(user?.foundation?._id);
   const isLiked = (post) => (post.likes || []).some(id => String(id) === String(user?._id));
 
-  const totalLikes = posts.reduce((s, p) => s + (p.likes?.length || 0), 0);
-  const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
+  // Статистика сервер эсептейт — бардык посттор боюнча, бир гана барак эмес
+  const totalLikes = stats.likes;
+  const totalViews = stats.views;
 
   return (
     <div className="space-y-5 max-w-3xl mx-auto">
@@ -486,7 +508,7 @@ export default function Blog() {
               { label: 'Лайк', value: totalLikes },
               { label: 'Көрүү', value: totalViews },
               ...Object.entries(TYPE_CONFIG).map(([key, v]) => ({
-                label: v.label, value: posts.filter(p => p.type === key).length, color: v.color,
+                label: v.label, value: stats.byType[key] || 0, color: v.color,
               })),
             ].map((s, i) => (
               <div key={i} className="flex flex-col">
@@ -657,6 +679,8 @@ export default function Blog() {
           })}
         </div>
       )}
+
+      <Pagination page={page} pages={pages} total={total} limit={PAGE_SIZE} onChange={setPage} />
 
       <PostModal
         open={modalOpen}

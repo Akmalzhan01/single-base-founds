@@ -1,23 +1,40 @@
 const Post = require('../models/Post');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const { parsePaging, pageMeta } = require('../utils/pagination');
 
 // GET /api/posts  — all foundations see all posts
 exports.getAll = catchAsync(async (req, res) => {
-  const { type, page = 1, limit = 20 } = req.query;
+  const { type } = req.query;
+  const { page, limit, skip } = parsePaging(req.query);
   const filter = {};
   if (type) filter.type = type;
 
-  const skip = (Number(page) - 1) * Number(limit);
-  const total = await Post.countDocuments(filter);
-  const posts = await Post.find(filter)
-    .populate('foundation', 'name')
-    .populate('author', 'name')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(Number(limit));
+  const [total, posts, statRows] = await Promise.all([
+    Post.countDocuments(filter),
+    Post.find(filter)
+      .populate('foundation', 'name')
+      .populate('author', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    // Блогдун жалпы статистикасы — бардык посттор боюнча (бир барак эмес)
+    Post.aggregate([{ $group: {
+      _id: '$type',
+      count: { $sum: 1 },
+      likes: { $sum: { $size: { $ifNull: ['$likes', []] } } },
+      views: { $sum: { $ifNull: ['$views', 0] } },
+    } }]),
+  ]);
 
-  res.status(200).json({ success: true, total, data: posts });
+  const stats = { byType: {}, likes: 0, views: 0 };
+  for (const r of statRows) {
+    stats.byType[r._id] = r.count;
+    stats.likes += r.likes;
+    stats.views += r.views;
+  }
+
+  res.status(200).json({ success: true, ...pageMeta(total, page, limit), stats, data: posts });
 });
 
 // GET /api/posts/:id  — full detail + increment view

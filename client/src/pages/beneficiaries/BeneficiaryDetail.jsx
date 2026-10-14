@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toNeedTypes } from '../../utils/needType';
 import VerificationBadge from '../../components/beneficiary/VerificationBadge';
 import { useCategories } from '../../context/CategoriesContext';
+import { listUrl } from '../../utils/listState';
 
 const avatarColors = [
   ['#3b82f6', '#6366f1'], ['#a855f7', '#7c3aed'], ['#f43f5e', '#db2777'],
@@ -264,7 +265,7 @@ export default function BeneficiaryDetail() {
     try {
       await api.delete(`/beneficiaries/${id}`);
       toast.success('Муктаж өчүрүлдү');
-      navigate('/lists');
+      navigate(listUrl());
     } catch {
       toast.error('Өчүрүүдө ката кетти');
       setDeleting(false);
@@ -302,7 +303,7 @@ export default function BeneficiaryDetail() {
       {/* Top bar */}
       <div className="flex items-center gap-3 mb-2">
         <button
-          onClick={() => navigate('/lists')}
+          onClick={() => navigate(listUrl())}
           className="p-2 rounded-xl cursor-pointer transition-all"
           style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#64748b', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
           onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#1e293b'; }}

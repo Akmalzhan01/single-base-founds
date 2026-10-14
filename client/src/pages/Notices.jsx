@@ -7,6 +7,7 @@ import Spinner from '../components/ui/Spinner';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import Pagination from '../components/ui/Pagination';
 import toast from 'react-hot-toast';
 
 const cardStyle = {
@@ -26,6 +27,8 @@ const PRIORITY_CONFIG = {
   medium: { label: 'Орто',    color: '#f59e0b', bg: '#fffbeb' },
   high:   { label: 'Жогору',  color: '#ef4444', bg: '#fef2f2' },
 };
+
+const PAGE_SIZE = 15;
 
 const EMPTY_FORM = { title: '', description: '', address: '', region: '', district: '', phone: '', priority: 'medium', deadline: '' };
 
@@ -92,6 +95,9 @@ export default function Notices() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
   const searchRef = useRef(null);
 
   // Create modal
@@ -113,23 +119,35 @@ export default function Notices() {
   const [commentText, setCommentText] = useState('');
   const [addingComment, setAddingComment] = useState(false);
 
-  // Debounce search
+  // Издөө кечигүү менен колдонулат — ар бир тамгага суроо кетпейт
   useEffect(() => {
-    const t = setTimeout(() => load(), 350);
+    const t = setTimeout(() => {
+      if (search.trim() === debouncedSearch) return;
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 350);
     return () => clearTimeout(t);
   }, [search]); // eslint-disable-line
 
+  const changeFilter = (setter) => (value) => { setter(value); setPage(1); };
+
   const load = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams();
+    const params = new URLSearchParams({ page, limit: PAGE_SIZE });
     if (filterStatus) params.set('status', filterStatus);
     if (filterPriority) params.set('priority', filterPriority);
-    if (search) params.set('search', search);
+    if (debouncedSearch) params.set('search', debouncedSearch);
     api.get(`/notices?${params}`)
-      .then(r => { setNotices(r.data.data); setTotal(r.data.total); })
+      .then(r => {
+        // Барак бош калса (мисалы, акыркы маалымат өчсө) — мурунку баракка
+        if (page > r.data.pages) return setPage(r.data.pages);
+        setNotices(r.data.data);
+        setTotal(r.data.total);
+        setPages(r.data.pages);
+      })
       .catch(() => toast.error('Жүктөлгөн жок'))
       .finally(() => setLoading(false));
-  }, [filterStatus, filterPriority, search]);
+  }, [filterStatus, filterPriority, debouncedSearch, page]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -137,9 +155,9 @@ export default function Notices() {
     if (!form.title) return toast.error('Аталыш керек');
     setSaving(true);
     try {
-      const res = await api.post('/notices', form);
-      setNotices(p => [res.data.data, ...p]);
-      setTotal(t => t + 1);
+      await api.post('/notices', form);
+      // Жаңы маалымат биринчи баракта чыгат
+      if (page !== 1) setPage(1); else load();
       setCreateModal(false);
       setForm(EMPTY_FORM);
       toast.success('Маалымат жарыяланды');
@@ -284,7 +302,7 @@ export default function Notices() {
           {['', 'open', 'in_progress', 'resolved'].map(s => (
             <button
               key={s}
-              onClick={() => setFilterStatus(s)}
+              onClick={() => changeFilter(setFilterStatus)(s)}
               className="px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all cursor-pointer"
               style={filterStatus === s
                 ? { background: '#0d0d18', color: '#fff' }
@@ -298,7 +316,7 @@ export default function Notices() {
           {['', 'high', 'medium', 'low'].map(p => (
             <button
               key={p}
-              onClick={() => setFilterPriority(p)}
+              onClick={() => changeFilter(setFilterPriority)(p)}
               className="px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all cursor-pointer"
               style={filterPriority === p
                 ? { background: '#0d0d18', color: '#fff' }
@@ -362,6 +380,8 @@ export default function Notices() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} pages={pages} total={total} limit={PAGE_SIZE} onChange={setPage} />
 
       {/* Create Modal */}
       <Modal open={createModal} onClose={() => setCreateModal(false)} title="Жаңы маалымат жарыялоо" size="md">
