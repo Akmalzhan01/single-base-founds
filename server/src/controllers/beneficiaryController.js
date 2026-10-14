@@ -7,7 +7,7 @@ const { generateBeneficiaryPDF } = require('../services/pdfService');
 const audit = require('../utils/audit');
 
 const TRACKED_FIELDS = [
-  'status', 'needType', 'fullName', 'address', 'phone', 'birthDate',
+  'verificationStatus', 'status', 'needType', 'fullName', 'address', 'phone', 'birthDate',
   'childrenCount', 'guardianType', 'employed', 'supportSources', 'monthlyIncome',
   'region', 'district', 'village', 'comments',
 ];
@@ -57,7 +57,13 @@ const fmtValue = (v) => {
 const FIELD_FORMATTERS = {
   employed: (v) => (v == null || v === '' ? '' : (v === true || v === 'true' ? 'Иштейт' : 'Иштебейт')),
   monthlyIncome: (v) => (v == null || v === '' ? '' : `${Number(v).toLocaleString('ru-RU')} сом`),
+  // Эски жазууларда талаа жок — демейки маани менен көрсөтөбүз
+  verificationStatus: (v) => v || 'Текшерилбеген',
 };
+
+// Эски жазууларда verificationStatus жок, алар «Текшерилбеген» катары саналат
+const verificationFilter = (v) =>
+  v === 'Текшерилбеген' ? { $in: [null, 'Текшерилбеген'] } : v;
 
 // FormData/JSON аркылуу келген талааларды моделге ылайыктайт
 const normalizeBody = (data) => {
@@ -79,7 +85,7 @@ const fmtField = (field, v) =>
 
 // GET /api/beneficiaries
 exports.getAll = catchAsync(async (req, res) => {
-  const { search, status, needType, region, district, page = 1, limit = 20 } = req.query;
+  const { search, status, verificationStatus, needType, region, district, page = 1, limit = 20 } = req.query;
 
   const filter = {};
 
@@ -96,6 +102,7 @@ exports.getAll = catchAsync(async (req, res) => {
   }
 
   if (status) filter.status = status;
+  if (verificationStatus) filter.verificationStatus = verificationFilter(verificationStatus);
   if (needType) filter.needType = needType;
   if (region) filter.region = region;
   if (district) filter.district = district;
@@ -248,7 +255,7 @@ exports.remove = catchAsync(async (req, res, next) => {
 
 // GET /api/beneficiaries/export  — JSON export (client generates XLSX)
 exports.exportCsv = catchAsync(async (req, res) => {
-  const { search, status, needType, region, district } = req.query;
+  const { search, status, verificationStatus, needType, region, district } = req.query;
   const filter = {};
 
   if (search) {
@@ -258,6 +265,7 @@ exports.exportCsv = catchAsync(async (req, res) => {
     ];
   }
   if (status) filter.status = status;
+  if (verificationStatus) filter.verificationStatus = verificationFilter(verificationStatus);
   if (needType) filter.needType = needType;
   if (region) filter.region = region;
   if (district) filter.district = district;
@@ -277,6 +285,7 @@ exports.exportCsv = catchAsync(async (req, res) => {
     district:      b.district || '',
     village:       b.village || '',
     status:        b.status || '',
+    verificationStatus: fmtField('verificationStatus', b.verificationStatus),
     needType:      fmtValue(b.needType),
     employed:      fmtField('employed', b.employed),
     supportSources: fmtValue(b.supportSources),

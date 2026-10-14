@@ -124,6 +124,7 @@ exports.generateBeneficiaryPDF = (beneficiary, aidRecords, stream) => {
   infoRow(doc, 'Абалы', beneficiary.status, lx, y + 90, colW);
   infoRow(doc, 'Балдарынын саны', beneficiary.childrenCount ?? '0', lx, y + 120, colW);
   infoRow(doc, 'Иштейби', beneficiary.employed == null ? '—' : (beneficiary.employed ? 'Иштейт' : 'Иштебейт'), lx, y + 150, colW);
+  infoRow(doc, 'Текшерүү абалы', beneficiary.verificationStatus || 'Текшерилбеген', lx, y + 180, colW);
 
   // Right column
   infoRow(doc, 'Аты-жөнү', beneficiary.fullName, rx, y, colW);
@@ -142,7 +143,7 @@ exports.generateBeneficiaryPDF = (beneficiary, aidRecords, stream) => {
     rx, y + 150, colW
   );
 
-  y += 185;
+  y += 215;
 
   // Ким жардам берет — тизме узун болушу мүмкүн, толук кеңдикте
   const support = (beneficiary.supportSources || []).join(', ');

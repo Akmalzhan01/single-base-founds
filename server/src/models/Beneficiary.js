@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const VERIFICATION_STATUSES = ['Текшерилбеген', 'Текшерүүдө', 'Текшерилген', 'Шектүү', 'Аферист'];
+
 const childSchema = new mongoose.Schema({
   inn: { type: String },
   fullName: { type: String },
@@ -30,6 +32,12 @@ const beneficiarySchema = new mongoose.Schema({
     type: String,
     enum: ['Карыя', 'Жесир', 'Майып', 'Зейнеткер', 'Жалгыз эне', 'Башка'],
     default: 'Карыя',
+  },
+  // Текшерүү абалы — фонддор муктажды текшергенден кийин белгилейт
+  verificationStatus: {
+    type: String,
+    enum: VERIFICATION_STATUSES,
+    default: 'Текшерилбеген',
   },
   // Бир нече муктаздык тандалышы мүмкүн
   needType: {
@@ -84,5 +92,7 @@ const beneficiarySchema = new mongoose.Schema({
 beneficiarySchema.index({ phone: 1 });
 beneficiarySchema.index({ fullName: 'text' });
 beneficiarySchema.index({ region: 1, district: 1 });
+beneficiarySchema.index({ verificationStatus: 1 });
 
 module.exports = mongoose.model('Beneficiary', beneficiarySchema);
+module.exports.VERIFICATION_STATUSES = VERIFICATION_STATUSES;

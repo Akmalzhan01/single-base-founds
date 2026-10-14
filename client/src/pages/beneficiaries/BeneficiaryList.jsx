@@ -7,6 +7,8 @@ import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
 import Pagination from '../../components/ui/Pagination';
 import { toNeedTypes } from '../../utils/needType';
+import { VERIFICATION_STATUSES } from '../../utils/verificationStatus';
+import VerificationBadge from '../../components/beneficiary/VerificationBadge';
 
 const needColors = {
   'Азык-түүлүк': 'green', 'Дары-дармек': 'blue', 'Акча': 'yellow',
@@ -42,7 +44,7 @@ export default function BeneficiaryList() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ status: '', needType: '', region: '' });
+  const [filters, setFilters] = useState({ verificationStatus: '', status: '', needType: '', region: '' });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -124,6 +126,16 @@ export default function BeneficiaryList() {
           />
         </div>
         <select
+          value={filters.verificationStatus}
+          onChange={setFilter('verificationStatus')}
+          className="rounded-xl px-3 py-2 text-[13px] outline-none transition-all cursor-pointer"
+          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569' }}
+        >
+          {['', ...VERIFICATION_STATUSES].map((v) => (
+            <option key={v} value={v}>{v || 'Бардык текшерүүлөр'}</option>
+          ))}
+        </select>
+        <select
           value={filters.status}
           onChange={setFilter('status')}
           className="rounded-xl px-3 py-2 text-[13px] outline-none transition-all cursor-pointer"
@@ -172,6 +184,7 @@ export default function BeneficiaryList() {
                 <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Телефон</th>
                 <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Муктаздыгы</th>
                 <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Абалы</th>
+                <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Текшерүү</th>
                 <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Фонд</th>
                 <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Катталган</th>
                 <th className="px-4 py-3.5 w-10" />
@@ -210,6 +223,9 @@ export default function BeneficiaryList() {
                       </div>
                     </td>
                     <td className="px-4 py-3.5 text-slate-400 text-[12px]">{b.status}</td>
+                    <td className="px-4 py-3.5">
+                      <VerificationBadge value={b.verificationStatus} />
+                    </td>
                     <td className="px-4 py-3.5 text-slate-400 text-[12px]">{b.registeredBy?.name || '—'}</td>
                     <td className="px-4 py-3.5 text-slate-400 text-[12px]">
                       {new Date(b.createdAt).toLocaleDateString('ru-RU')}

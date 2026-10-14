@@ -8,13 +8,13 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import api from '../../config/axios';
 import Spinner from '../../components/ui/Spinner';
 import StatusBadge from '../../components/ui/StatusBadge';
+import VerificationBadge from '../../components/ui/VerificationBadge';
 import { C } from '../../config/colors';
+import { VERIFICATION_STATUSES } from '../../utils/verificationStatus';
 
 const FILTERS = [
   { key: '', label: 'Баары' },
-  { key: 'active',   label: 'Активдүү' },
-  { key: 'inactive', label: 'Активсыз' },
-  { key: 'pending',  label: 'Күтүүдө' },
+  ...VERIFICATION_STATUSES.map(v => ({ key: v, label: v })),
 ];
 
 function BeneficiaryCard({ item, onPress }) {
@@ -32,8 +32,8 @@ function BeneficiaryCard({ item, onPress }) {
         </View>
       </View>
       <View style={s.cardRight}>
-        <StatusBadge value={item.status} />
-        <Ionicons name="chevron-forward" size={16} color={C.textLight} style={{ marginTop: 6 }} />
+        <VerificationBadge value={item.verificationStatus} style={{ alignSelf: 'flex-end' }} />
+        <StatusBadge value={item.status} style={{ alignSelf: 'flex-end', marginTop: 4 }} />
       </View>
     </TouchableOpacity>
   );
@@ -55,7 +55,7 @@ export default function BeneficiaryListScreen() {
     try {
       const params = { page: pg, limit: 20 };
       if (search) params.search = search;
-      if (status) params.status = status;
+      if (status) params.verificationStatus = status;
       const res = await api.get('/beneficiaries', { params });
       const list = res.data.data || [];
       const tot  = res.data.total || 0;
@@ -186,7 +186,7 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   cardLeft:  { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  cardRight: { alignItems: 'flex-end' },
+  cardRight: { alignItems: 'flex-end', marginLeft: 8 },
   avatar:    { width: 42, height: 42, borderRadius: 11, backgroundColor: C.primaryBg, justifyContent: 'center', alignItems: 'center' },
   avatarText:{ fontSize: 15, fontWeight: '700', color: C.primary },
   name:      { fontSize: 14, fontWeight: '700', color: C.text, marginBottom: 2 },

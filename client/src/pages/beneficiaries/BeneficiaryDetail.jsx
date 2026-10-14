@@ -8,6 +8,7 @@ import AidModal from './AidModal';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { toNeedTypes } from '../../utils/needType';
+import VerificationBadge from '../../components/beneficiary/VerificationBadge';
 
 const avatarColors = [
   ['#3b82f6', '#6366f1'], ['#a855f7', '#7c3aed'], ['#f43f5e', '#db2777'],
@@ -116,6 +117,7 @@ function AidAccordion({ rec, isLast }) {
 }
 
 const FIELD_LABELS = {
+  verificationStatus: 'Текшерүү',
   status: 'Абалы',
   needType: 'Муктаждыгы',
   fullName: 'Аты-жөнү',
@@ -272,6 +274,18 @@ export default function BeneficiaryDetail() {
     }
   };
 
+  const handleVerification = async (verificationStatus) => {
+    try {
+      await api.put(`/beneficiaries/${id}`, { verificationStatus });
+      setData((d) => ({ ...d, verificationStatus }));
+      const hist = await api.get(`/beneficiaries/${id}/history`);
+      setHistory(hist.data.data);
+      toast.success('Текшерүү абалы жаңыланды');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Ката кетти');
+    }
+  };
+
   useEffect(() => { load(); }, [id]);
 
   if (loading) return <Spinner />;
@@ -283,6 +297,7 @@ export default function BeneficiaryDetail() {
   );
 
   const [c1, c2] = getAvatarColors(data.fullName);
+  const canEdit = user?.isSuperadmin || String(data.registeredBy?._id) === String(user?.foundation?._id);
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
@@ -311,7 +326,7 @@ export default function BeneficiaryDetail() {
           <Download size={13} />
           PDF
         </button>
-        {(user?.isSuperadmin || String(data.registeredBy?._id) === String(user?.foundation?._id)) && (
+        {canEdit && (
           <>
             <button
               onClick={() => navigate(`/beneficiaries/${id}/edit`)}
@@ -349,6 +364,14 @@ export default function BeneficiaryDetail() {
 
       {/* Main profile card */}
       <div className="rounded-2xl p-6" style={cardStyle}>
+        {data.verificationStatus === 'Аферист' && (
+          <div
+            className="mb-5 -mt-1 rounded-xl px-4 py-2.5 text-[13px] font-medium"
+            style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}
+          >
+            Эскертүү: бул адам аферист деп белгиленген. Жардам берүүдөн мурун кайра текшериңиз.
+          </div>
+        )}
         <div className="flex gap-5 items-start">
           {data.photo ? (
             <img src={data.photo} alt="" className="w-20 h-20 rounded-2xl object-cover border border-slate-100 shrink-0" />
@@ -424,6 +447,14 @@ export default function BeneficiaryDetail() {
             {data.comments && (
               <p className="text-[12px] text-slate-400 italic border-l-2 border-slate-100 pl-3">{data.comments}</p>
             )}
+          </div>
+          <div className="shrink-0">
+            <VerificationBadge
+              value={data.verificationStatus}
+              size="lg"
+              editable={canEdit}
+              onChange={handleVerification}
+            />
           </div>
         </div>
 

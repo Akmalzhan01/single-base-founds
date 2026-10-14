@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { toNeedTypes } from '../../utils/needType';
+import VerificationBadge from './VerificationBadge';
 
 const needColors = {
   'Азык-түүлүк': 'green',
@@ -33,6 +34,7 @@ export default function DuplicateAlert({ data, aidRecords, onContinue, onCancel 
         <div className="flex items-center gap-2 text-sm">
           <User size={15} className="text-gray-400" />
           <span className="font-medium text-gray-800">{data.fullName}</span>
+          <VerificationBadge value={data.verificationStatus} />
           {toNeedTypes(data.needType).map((n) => (
             <Badge key={n} color={needColors[n] || 'gray'}>{n}</Badge>
           ))}

@@ -13,6 +13,7 @@ import Toast from 'react-native-toast-message';
 import api from '../../config/axios';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/ui/Spinner';
+import VerificationBadge from '../../components/ui/VerificationBadge';
 import { C } from '../../config/colors';
 import { toNeedTypes } from '../../utils/needType';
 
@@ -175,7 +176,7 @@ const ACTION_META = {
   delete: { icon: 'trash-outline',         color: '#ef4444', bg: '#fef2f2', label: 'Өчүрүлдү' },
 };
 const FIELD_LABELS = {
-  status: 'Абалы', needType: 'Муктаждыгы', fullName: 'Аты-жөнү', address: 'Дарек',
+  verificationStatus: 'Текшерүү', status: 'Абалы', needType: 'Муктаждыгы', fullName: 'Аты-жөнү', address: 'Дарек',
   phone: 'Телефон', birthDate: 'Туулган жылы', childrenCount: 'Балдар саны',
   guardianType: 'Кимдин карамагында', employed: 'Иштейби', region: 'Облус', district: 'Район',
   village: 'Айыл', comments: 'Комментарий', photo: 'Сүрөт',
@@ -526,6 +527,18 @@ export default function BeneficiaryDetailScreen() {
     );
   };
 
+  const handleVerification = async (verificationStatus) => {
+    try {
+      await api.put(`/beneficiaries/${id}`, { verificationStatus });
+      setData(d => ({ ...d, verificationStatus }));
+      const hRes = await api.get(`/beneficiaries/${id}/history`).catch(() => null);
+      if (hRes) setHistory(hRes.data.data || []);
+      Toast.show({ type: 'success', text1: 'Текшерүү абалы жаңыланды' });
+    } catch (err) {
+      Toast.show({ type: 'error', text1: err.response?.data?.message || 'Ката кетти' });
+    }
+  };
+
   const canEdit = user?.isSuperadmin ||
     String(data?.registeredBy?._id || data?.registeredBy) === String(user?.foundation?._id);
 
@@ -548,6 +561,12 @@ export default function BeneficiaryDetailScreen() {
       >
         {/* ── Profile card ── */}
         <View style={s.card}>
+          {data.verificationStatus === 'Аферист' && (
+            <View style={s.fraudBanner}>
+              <Ionicons name="warning-outline" size={16} color="#b91c1c" />
+              <Text style={s.fraudText}>Бул адам аферист деп белгиленген. Жардам берүүдөн мурун кайра текшериңиз.</Text>
+            </View>
+          )}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 16 }}>
             {data.photo ? (
               <ZoomableImage
@@ -568,6 +587,11 @@ export default function BeneficiaryDetailScreen() {
                 {data.guardianType && <Badge label={data.guardianType} bg={C.blueBg} color={C.blue} />}
               </View>
             </View>
+            <VerificationBadge
+              value={data.verificationStatus}
+              editable={canEdit}
+              onChange={handleVerification}
+            />
           </View>
 
           <View style={s.divider} />
@@ -799,6 +823,8 @@ function InfoRow({ icon, label, value, mono }) {
 const s = StyleSheet.create({
   screen:        { flex: 1, backgroundColor: C.bg },
   card:          { backgroundColor: '#fff', margin: 16, marginBottom: 0, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  fraudBanner:   { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca', borderRadius: 12, padding: 10, marginBottom: 14 },
+  fraudText:     { flex: 1, fontSize: 12, fontWeight: '600', color: '#b91c1c', lineHeight: 17 },
   divider:       { height: 1, backgroundColor: C.borderLight, marginBottom: 12 },
   infoRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
   infoIcon:      { width: 28, height: 28, borderRadius: 8, backgroundColor: C.primaryBg, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
