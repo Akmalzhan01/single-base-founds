@@ -24,6 +24,9 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// Визитка сайт (karavan-ihlas.com) — домен боюнча ажыратылат, site/ папкасынан
+app.use(require('./src/routes/siteHost'));
+
 // Routes
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/beneficiaries', require('./src/routes/beneficiaryRoutes'));
@@ -35,6 +38,9 @@ app.use('/api/audit', require('./src/routes/auditRoutes'));
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/posts', require('./src/routes/postRoutes'));
 app.use('/api/categories', require('./src/routes/categoryRoutes'));
+const { publicRouter: sitePublic, adminRouter: siteAdmin } = require('./src/routes/siteRoutes');
+app.use('/api/public', sitePublic);
+app.use('/api/site', siteAdmin);
 
 // Serve React client in production
 if (process.env.NODE_ENV === 'production') {

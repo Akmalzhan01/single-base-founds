@@ -16,6 +16,7 @@ import Notices from './pages/Notices';
 import Profile from './pages/Profile';
 import AuditLog from './pages/superadmin/AuditLog';
 import Categories from './pages/superadmin/Categories';
+import SiteSettings from './pages/superadmin/SiteSettings';
 import StaffManagement from './pages/fondadmin/StaffManagement';
 import FoundationSettings from './pages/fondadmin/FoundationSettings';
 import Blog from './pages/Blog';
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="profile" element={<Profile />} />
         <Route path="audit" element={<AuditLog />} />
         <Route path="categories" element={<Categories />} />
+        <Route path="site" element={<SiteSettings />} />
         <Route path="staff" element={<StaffManagement />} />
         <Route path="settings" element={<FoundationSettings />} />
       </Route>

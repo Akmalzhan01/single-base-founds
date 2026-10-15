@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <meta name="description" content="{{DESCRIPTION}}">
+  <link rel="canonical" href="{{URL}}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{SITE_NAME}}">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:image" content="{{IMAGE}}">
+  <meta property="og:url" content="{{URL}}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#1B2B52">
+
+  <link rel="icon" href="/assets/favicon.svg?v={{V}}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+  <link rel="stylesheet" href="/assets/site.css?v={{V}}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Негизги мазмунга өтүү</a>
+
+  <div id="app">
+    <noscript>
+      <p style="padding:2rem;font-family:sans-serif">Сайтты көрүү үчүн браузерде JavaScript'ти күйгүзүңүз.</p>
+    </noscript>
+  </div>
+
+  <!-- Найза сымал арка (Борбор Азия архитектурасы) — баш бөлүмдөгү сүрөттүн формасы -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <clipPath id="arch-clip" clipPathUnits="objectBoundingBox">
+        <path d="M0,1 V0.42 C0,0.21 0.33,0.11 0.5,0 C0.67,0.11 1,0.21 1,0.42 V1 Z" />
+      </clipPath>
+    </defs>
+  </svg>
+
+  <script id="site-data" type="application/json">{{DATA}}</script>
+  <script src="/assets/site.js?v={{V}}" defer></script>
+</body>
+</html>

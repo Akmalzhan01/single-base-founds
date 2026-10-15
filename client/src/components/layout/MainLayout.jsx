@@ -15,6 +15,7 @@ const pageTitles = {
   '/profile': 'Профиль',
   '/audit': 'Аудит лог',
   '/categories': 'Категориялар',
+  '/site': 'Сайт',
   '/staff': 'Кызматкерлер',
   '/settings': 'Фонд созламалары',
   '/blog': 'Блог',
