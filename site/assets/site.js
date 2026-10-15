@@ -11,6 +11,70 @@
   const sections = S.sections || {};
   const isHome = page.type === 'home';
 
+  // ── Тил ──────────────────────────────────────────────────────
+  // Кыргызча — /, орусча — /ru/..., англисче — /en/... (сервер page.lang жана page.base берет)
+  const LANG = page.lang || 'ky';
+  const BASE = page.base || '';
+  const LANG_PREFIX = /^\/(ru|en)(?=\/|$)/;
+  const to = (path) => (path === '/' ? BASE || '/' : `${BASE}${path}`);
+
+  const DICT = {
+    ky: {
+      home: 'башкы бет', mainMenu: 'Негизги меню', menuOpen: 'Менюну ачуу', menuClose: 'Менюну жабуу', langLabel: 'Тил',
+      about: 'Биз жөнүндө', directions: 'Эмне кылабыз', news: 'Жаңылыктар', contacts: 'Байланыш', stats: 'Сандар менен', donate: 'Жардам берүү',
+      since: '-жылдан бери иштейбиз',
+      copy: 'Көчүрүү', copied: 'Көчүрүлдү', copyFailed: 'Көчүрүлгөн жок', copiedLive: (x) => `${x} көчүрүлдү`,
+      donateEmpty: ['Жардам берүү жолдорун билүү үчүн ', 'биз менен байланышыңыз', '.'],
+      allNews: 'Бардык жаңылыктар', noNews: 'Азырынча жаңылыктар жок. Кийинчерээк кайра кириңиз.',
+      pages: 'Барактар', prev: 'Мурунку', next: 'Кийинки', share: 'Бөлүшүү', linkCopied: 'Шилтеме көчүрүлдү',
+      address: 'Дарек', phone: 'Телефон', email: 'Электрондук почта', openMap: 'Картадан ачуу', mapTitle: 'Картада биздин дарек',
+      footerSections: 'Бөлүмдөр', footerLinks: 'Шилтемелер',
+      nfTitle: 'Бул барак табылган жок',
+      nfText: 'Шилтеме эскирген же туура эмес терилген болушу мүмкүн. Башкы бетке кайтып, керектүү бөлүмдү тандаңыз.',
+      nfBack: 'Башкы бетке кайтуу',
+      types: { elon: 'Жарыя', yangilik: 'Жаңылык', musobaqa: 'Конкурс' },
+    },
+    ru: {
+      home: 'главная', mainMenu: 'Главное меню', menuOpen: 'Открыть меню', menuClose: 'Закрыть меню', langLabel: 'Язык',
+      about: 'О нас', directions: 'Чем мы занимаемся', news: 'Новости', contacts: 'Контакты', stats: 'В цифрах', donate: 'Помочь',
+      since: 'год основания',
+      copy: 'Копировать', copied: 'Скопировано', copyFailed: 'Не удалось скопировать', copiedLive: (x) => `${x} скопировано`,
+      donateEmpty: ['Чтобы узнать, как помочь, ', 'свяжитесь с нами', '.'],
+      allNews: 'Все новости', noNews: 'Новостей пока нет. Загляните позже.',
+      pages: 'Страницы', prev: 'Назад', next: 'Далее', share: 'Поделиться', linkCopied: 'Ссылка скопирована',
+      address: 'Адрес', phone: 'Телефон', email: 'Эл. почта', openMap: 'Открыть на карте', mapTitle: 'Наш адрес на карте',
+      footerSections: 'Разделы', footerLinks: 'Ссылки',
+      nfTitle: 'Страница не найдена',
+      nfText: 'Возможно, ссылка устарела или набрана с ошибкой. Вернитесь на главную и выберите нужный раздел.',
+      nfBack: 'На главную',
+      types: { elon: 'Объявление', yangilik: 'Новость', musobaqa: 'Конкурс' },
+    },
+    en: {
+      home: 'home', mainMenu: 'Main menu', menuOpen: 'Open menu', menuClose: 'Close menu', langLabel: 'Language',
+      about: 'About us', directions: 'What we do', news: 'News', contacts: 'Contact', stats: 'In numbers', donate: 'Donate',
+      since: 'year founded',
+      copy: 'Copy', copied: 'Copied', copyFailed: 'Copy failed', copiedLive: (x) => `${x} copied`,
+      donateEmpty: ['To find out how to help, ', 'contact us', '.'],
+      allNews: 'All news', noNews: 'No news yet. Please check back later.',
+      pages: 'Pages', prev: 'Previous', next: 'Next', share: 'Share', linkCopied: 'Link copied',
+      address: 'Address', phone: 'Phone', email: 'Email', openMap: 'Open in maps', mapTitle: 'Our address on the map',
+      footerSections: 'Sections', footerLinks: 'Links',
+      nfTitle: 'Page not found',
+      nfText: 'The link may be outdated or mistyped. Go back to the home page and choose a section.',
+      nfBack: 'Back to home',
+      types: { elon: 'Announcement', yangilik: 'News', musobaqa: 'Contest' },
+    },
+  };
+  const t = DICT[LANG] || DICT.ky;
+
+  const LANGS = [['ky', 'Кыр', 'Кыргызча'], ['ru', 'Рус', 'Русский'], ['en', 'Eng', 'English']];
+  // Ушул эле барактын башка тилдеги дареги
+  function langHref(lang) {
+    const rest = location.pathname.replace(LANG_PREFIX, '') || '/';
+    const prefix = lang === 'ky' ? '' : `/${lang}`;
+    return (rest === '/' ? prefix || '/' : `${prefix}${rest}`) + location.search;
+  }
+
   // ── Жардамчылар ──────────────────────────────────────────────
   function h(tag, props, ...children) {
     const el = document.createElement(tag);
@@ -47,8 +111,8 @@
     const u = String(raw || '').trim();
     if (!u) return null;
     if (/^(https?:|mailto:|tel:)/i.test(u)) return u;
-    if (u.startsWith('#')) return isHome ? u : `/${u}`;
-    if (u.startsWith('/') && !u.startsWith('//')) return u;
+    if (u.startsWith('#')) return isHome ? u : `${BASE}/${u}`;
+    if (u.startsWith('/') && !u.startsWith('//')) return LANG_PREFIX.test(u) ? u : to(u);
     if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(u)) return `https://${u}`;
     return null;
   }
@@ -56,15 +120,18 @@
   const isExternal = (href) => /^https?:/i.test(href) && !href.includes(location.host);
   const linkProps = (href) => (isExternal(href) ? { href, target: '_blank', rel: 'noopener' } : { href });
 
-  // Браузерлерде кыргызча дата форматы жок (орусча чыгат) — өзүбүз түзөбүз: «15-октябрь, 2026»
+  // Браузерлерде кыргызча дата форматы жок (орусча чыгат) — өзүбүз түзөбүз: «15-октябрь, 2026».
+  // Орусча «15 октября 2026», англисче «15 October 2026».
   const MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
   function fmtDate(d) {
     const date = new Date(d);
     if (Number.isNaN(date.getTime())) return '';
-    return `${date.getDate()}-${MONTHS[date.getMonth()]}, ${date.getFullYear()}`;
+    if (LANG === 'ky') return `${date.getDate()}-${MONTHS[date.getMonth()]}, ${date.getFullYear()}`;
+    return date.toLocaleDateString(LANG === 'ru' ? 'ru-RU' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      .replace(/\s*г\.$/, '');
   }
 
-  const POST_TYPES = { elon: 'Жарыя', yangilik: 'Жаңылык', musobaqa: 'Конкурс' };
+  const POST_TYPES = t.types;
 
   // ── Белгилер (24×24, сызык) ──────────────────────────────────
   const ICON_PATHS = {
@@ -183,7 +250,7 @@
 
   function brand(extraClass = '') {
     const b = S.brand || {};
-    return h('a', { class: `brand ${extraClass}`, href: '/', 'aria-label': `${b.name || ''} — башкы бет` },
+    return h('a', { class: `brand ${extraClass}`, href: to('/'), 'aria-label': `${b.name || ''} — ${t.home}` },
       has(b.logo) ? h('img', { class: 'brand__logo', src: b.logo, alt: '' }) : brandMark(),
       h('span', { class: 'brand__text' },
         h('span', { class: 'brand__name' }, b.name || ''),
@@ -208,18 +275,24 @@
 
   function navItems() {
     const items = [];
-    if (show.about) items.push(['#about', S.about.title || 'Биз жөнүндө']);
-    if (show.directions) items.push(['#directions', S.directions.title || 'Эмне кылабыз']);
-    if (sections.blog) items.push(['/blog', S.blog?.title || 'Жаңылыктар']);
-    if (show.contacts) items.push(['#contacts', C.title || 'Байланыш']);
+    if (show.about) items.push(['#about', S.about.title || t.about]);
+    if (show.directions) items.push(['#directions', S.directions.title || t.directions]);
+    if (sections.blog) items.push(['/blog', S.blog?.title || t.news]);
+    if (show.contacts) items.push(['#contacts', C.title || t.contacts]);
     return items;
   }
 
   const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function header() {
-    const nav = h('nav', { class: 'nav', id: 'site-nav', 'aria-label': 'Негизги меню' },
+    const nav = h('nav', { class: 'nav', id: 'site-nav', 'aria-label': t.mainMenu },
       navItems().map(([href, label]) => h('a', { href: safeHref(href) }, label)),
+      h('div', { class: 'lang', role: 'group', 'aria-label': t.langLabel },
+        LANGS.map(([code, short, full]) => h('a', {
+          class: 'lang__item', href: langHref(code), hreflang: code, lang: code, title: full,
+          'aria-current': code === LANG ? 'true' : null,
+        }, short)),
+      ),
     );
     const cta = S.hero?.primaryCta;
     if (has(cta?.label) && safeHref(cta.href)) {
@@ -228,7 +301,7 @@
     nav.addEventListener('click', (e) => { if (e.target.closest('a')) toggleMenu(false); });
 
     const toggle = h('button', {
-      class: 'menu-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'site-nav', 'aria-label': 'Менюну ачуу',
+      class: 'menu-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'site-nav', 'aria-label': t.menuOpen,
       onclick: () => toggleMenu(),
     }, icon('menu'));
 
@@ -242,7 +315,7 @@
       nav.classList.toggle('is-open', open);
       el.classList.toggle('is-menu', open);
       toggle.setAttribute('aria-expanded', String(open));
-      toggle.setAttribute('aria-label', open ? 'Менюну жабуу' : 'Менюну ачуу');
+      toggle.setAttribute('aria-label', open ? t.menuClose : t.menuOpen);
       toggle.replaceChildren(icon(open ? 'close' : 'menu'));
       if (open && window.gsap && !reducedMotion()) {
         window.gsap.from(nav.children, { y: -10, autoAlpha: 0, duration: 0.45, stagger: 0.05, ease: 'power3.out' });
@@ -328,13 +401,13 @@
         : h('div', { class: 'about__rosette' }, rosette()),
       has(A.foundedYear) ? h('p', { class: 'about__badge' },
         h('strong', {}, A.foundedYear),
-        h('span', {}, '-жылдан бери иштейбиз'),
+        h('span', {}, t.since),
       ) : null,
     );
     return h('section', { class: 'section', id: 'about' },
       h('div', { class: 'wrap about__grid' },
         h('div', { class: 'about__copy' },
-          h('h2', { class: 'split' }, words(A.title || 'Биз жөнүндө')),
+          h('h2', { class: 'split' }, words(A.title || t.about)),
           h('div', { class: 'about__text', 'data-reveal-group': true }, paragraphs(A.text)),
         ),
         visual,
@@ -348,7 +421,7 @@
     const D = S.directions;
     return h('section', { class: 'section section--mist', id: 'directions' },
       h('div', { class: 'wrap' },
-        h('div', { class: 'section__head' }, h('h2', { class: 'split' }, words(D.title || 'Эмне кылабыз'))),
+        h('div', { class: 'section__head' }, h('h2', { class: 'split' }, words(D.title || t.directions))),
         h('div', { class: 'directions', 'data-reveal-group': true },
           D.items.filter((d) => has(d.title)).map((d) =>
             h('article', { class: 'direction' },
@@ -366,7 +439,7 @@
     return h('section', { class: 'stats', 'aria-labelledby': 'stats-title' },
       h('div', { class: 'stats__rosette', 'aria-hidden': 'true' }, rosette()),
       h('div', { class: 'wrap' },
-        h('h2', { id: 'stats-title', class: 'split' }, words(T.title || 'Сандар менен')),
+        h('h2', { id: 'stats-title', class: 'split' }, words(T.title || t.stats)),
         h('ul', { class: 'stats__list', 'data-reveal-group': true },
           T.items.map((s) => h('li', {},
             // Сан өсүп чыгат; экран окугучка акыркы маани гана окулат
@@ -395,15 +468,15 @@
   };
 
   const live = h('div', { class: 'sr-only', 'aria-live': 'polite' });
-  function copyButton(text, label = 'Көчүрүү') {
+  function copyButton(text, label = t.copy) {
     const btn = h('button', { class: 'btn btn--ghost btn--small', type: 'button' }, icon('copy'), label);
     btn.addEventListener('click', async () => {
       const ok = await copyText(text);
       const mark = icon(ok ? 'check' : 'copy');
-      btn.replaceChildren(mark, ok ? 'Көчүрүлдү' : 'Көчүрүлгөн жок');
+      btn.replaceChildren(mark, ok ? t.copied : t.copyFailed);
       btn.classList.toggle('is-done', ok);
       if (ok) pop(mark);
-      live.textContent = ok ? `${text} көчүрүлдү` : '';
+      live.textContent = ok ? t.copiedLive(text) : '';
       setTimeout(() => { btn.replaceChildren(icon('copy'), label); btn.classList.remove('is-done'); }, 2200);
     });
     return btn;
@@ -415,7 +488,7 @@
     return h('section', { class: 'section donate', id: 'donate' },
       h('div', { class: 'wrap donate__grid' },
         h('div', { class: 'donate__copy' },
-          h('h2', { class: 'split' }, words(D.title || 'Жардам берүү')),
+          h('h2', { class: 'split' }, words(D.title || t.donate)),
           has(D.text) ? h('p', { 'data-reveal': true }, D.text) : null,
           svg(`
             <svg class="donate__arches" viewBox="-16 -32 132 160" aria-hidden="true">
@@ -433,9 +506,9 @@
             has(m.details) ? copyButton(m.details) : null,
           )))
           : h('p', { class: 'donate__empty', 'data-reveal': true },
-            'Жардам берүү жолдорун билүү үчүн ',
-            show.contacts ? h('a', { href: '#contacts' }, 'биз менен байланышыңыз') : 'биз менен байланышыңыз',
-            '.'),
+            t.donateEmpty[0],
+            show.contacts ? h('a', { href: '#contacts' }, t.donateEmpty[1]) : t.donateEmpty[1],
+            t.donateEmpty[2]),
       ),
     );
   }
@@ -455,7 +528,7 @@
   };
 
   function postCard(p) {
-    return h('a', { class: 'post-card', href: `/blog/${p._id}` },
+    return h('a', { class: 'post-card', href: to(`/blog/${p._id}`) },
       h('div', { class: 'post-card__media' },
         has(p.image) ? h('img', { src: p.image, alt: '', loading: 'lazy' }) : ornament({ tile: 40, ...(COVER[p.type] || COVER.yangilik) })),
       postMeta(p),
@@ -468,8 +541,8 @@
     return h('section', { class: 'section section--mist', id: 'blog' },
       h('div', { class: 'wrap' },
         h('div', { class: 'section-row' },
-          h('h2', { class: 'split' }, words(S.blog.title || 'Жаңылыктар')),
-          h('a', { class: 'btn btn--ghost btn--small', href: '/blog', 'data-reveal': true }, 'Бардык жаңылыктар'),
+          h('h2', { class: 'split' }, words(S.blog.title || t.news)),
+          h('a', { class: 'btn btn--ghost btn--small', href: to('/blog'), 'data-reveal': true }, t.allNews),
         ),
         h('div', { class: 'posts', 'data-reveal-group': true }, S.blog.posts.map(postCard)),
       ),
@@ -513,29 +586,29 @@
 
   function contacts() {
     const rows = [];
-    if (has(C.address)) rows.push(['pin', 'Дарек', C.address]);
+    if (has(C.address)) rows.push(['pin', t.address, C.address]);
     const phones = (C.phones || []).filter(has);
-    if (phones.length) rows.push(['phone', 'Телефон', phones.map((p, i) => [i ? ', ' : '', h('a', { href: `tel:${p.replace(/[^\d+]/g, '')}` }, p)])]);
-    if (has(C.email)) rows.push(['mail', 'Электрондук почта', h('a', { href: `mailto:${C.email.trim()}` }, C.email)]);
+    if (phones.length) rows.push(['phone', t.phone, phones.map((p, i) => [i ? ', ' : '', h('a', { href: `tel:${p.replace(/[^\d+]/g, '')}` }, p)])]);
+    if (has(C.email)) rows.push(['mail', t.email, h('a', { href: `mailto:${C.email.trim()}` }, C.email)]);
 
     const socials = socialLinks();
     const map = mapSrc(C.mapUrl);
 
     const info = h('div', {},
-      h('h2', { class: 'split' }, words(C.title || 'Байланыш')),
+      h('h2', { class: 'split' }, words(C.title || t.contacts)),
       rows.length ? h('dl', { class: 'contact-list', 'data-reveal-group': true }, rows.map(([ic, dt, dd]) => h('div', { class: 'contact-row' },
         h('span', { class: 'contact-row__icon' }, icon(ic)),
         h('div', {}, h('dt', {}, dt), h('dd', {}, dd)),
       ))) : null,
       socials.length ? h('div', { class: 'socials', 'data-reveal-group': true }, socials.map((s) => h('a', { class: 'social', href: s.href, target: '_blank', rel: 'noopener' }, icon(s.key), s.name))) : null,
-      map.link ? h('p', { style: 'margin-top:24px' }, h('a', { href: map.link, target: '_blank', rel: 'noopener' }, 'Картадан ачуу')) : null,
+      map.link ? h('p', { style: 'margin-top:24px' }, h('a', { href: map.link, target: '_blank', rel: 'noopener' }, t.openMap)) : null,
     );
 
     return h('section', { class: 'section', id: 'contacts' },
       h('div', { class: `wrap contacts__grid ${map.embed ? '' : 'contacts__grid--single'}` },
         info,
         map.embed ? h('div', { class: 'map', 'data-reveal': true }, h('iframe', {
-          src: map.embed, title: 'Картада биздин дарек', loading: 'lazy', referrerpolicy: 'no-referrer-when-downgrade', allowfullscreen: true,
+          src: map.embed, title: t.mapTitle, loading: 'lazy', referrerpolicy: 'no-referrer-when-downgrade', allowfullscreen: true,
         })) : null,
       ),
     );
@@ -549,11 +622,11 @@
       h('div', { class: 'wrap footer__inner' },
         h('div', {}, brand(), has(S.hero?.text) ? h('p', { class: 'footer__about' }, S.hero.text) : null),
         navItems().length ? h('div', {},
-          h('h3', {}, 'Бөлүмдөр'),
+          h('h3', {}, t.footerSections),
           h('ul', {}, navItems().map(([href, label]) => h('li', {}, h('a', { href: safeHref(href) }, label)))),
         ) : h('div'),
         (links.length || socials.length) ? h('div', {},
-          h('h3', {}, 'Шилтемелер'),
+          h('h3', {}, t.footerLinks),
           h('ul', {},
             links.map((l) => h('li', {}, h('a', linkProps(safeHref(l.href)), l.label))),
             socials.map((s) => h('li', {}, h('a', { href: s.href, target: '_blank', rel: 'noopener' }, s.name))),
@@ -629,19 +702,19 @@
 
   function blogPage() {
     const posts = page.data || [];
-    const pager = page.pages > 1 ? h('nav', { class: 'pager', 'aria-label': 'Барактар' },
-      page.page > 1 ? h('a', { class: 'btn btn--ghost btn--small', href: page.page - 1 > 1 ? `/blog?page=${page.page - 1}` : '/blog' }, 'Мурунку') : h('span'),
+    const pager = page.pages > 1 ? h('nav', { class: 'pager', 'aria-label': t.pages },
+      page.page > 1 ? h('a', { class: 'btn btn--ghost btn--small', href: page.page - 1 > 1 ? to(`/blog?page=${page.page - 1}`) : to('/blog') }, t.prev) : h('span'),
       h('span', {}, `${page.page} / ${page.pages}`),
-      page.page < page.pages ? h('a', { class: 'btn btn--ghost btn--small', href: `/blog?page=${page.page + 1}` }, 'Кийинки') : h('span'),
+      page.page < page.pages ? h('a', { class: 'btn btn--ghost btn--small', href: to(`/blog?page=${page.page + 1}`) }, t.next) : h('span'),
     ) : null;
 
     return [
-      pageHero([h('h1', { class: 'split' }, words(S.blog?.title || 'Жаңылыктар'))]),
+      pageHero([h('h1', { class: 'split' }, words(S.blog?.title || t.news))]),
       h('section', { class: 'section section--tight' },
         h('div', { class: 'wrap' },
           posts.length
             ? h('div', { class: 'posts', 'data-reveal-group': true }, posts.map(postCard))
-            : h('p', { class: 'donate__empty' }, 'Азырынча жаңылыктар жок. Кийинчерээк кайра кириңиз.'),
+            : h('p', { class: 'donate__empty' }, t.noNews),
           pager,
         ),
       ),
@@ -650,19 +723,19 @@
 
   function postPage() {
     const p = page.post;
-    const share = h('button', { class: 'btn btn--ghost btn--small', type: 'button' }, icon('share'), 'Бөлүшүү');
+    const share = h('button', { class: 'btn btn--ghost btn--small', type: 'button' }, icon('share'), t.share);
     share.addEventListener('click', async () => {
       const url = location.href;
       if (navigator.share) { try { await navigator.share({ title: p.title, url }); } catch { /* жокко чыгарылды */ } return; }
       const ok = await copyText(url);
       const mark = icon(ok ? 'check' : 'share');
-      share.replaceChildren(mark, ok ? 'Шилтеме көчүрүлдү' : 'Бөлүшүү');
+      share.replaceChildren(mark, ok ? t.linkCopied : t.share);
       if (ok) pop(mark);
     });
 
     return [
       pageHero([
-        h('a', { class: 'page-hero__back', href: '/blog', 'data-intro-fade': true }, icon('back'), S.blog?.title || 'Жаңылыктар'),
+        h('a', { class: 'page-hero__back', href: to('/blog'), 'data-intro-fade': true }, icon('back'), S.blog?.title || t.news),
         h('div', { 'data-intro-fade': true }, postMeta(p, 'post-meta--light')),
         h('h1', { class: 'split article__title' }, words(p.title)),
       ], { narrow: true }),
@@ -678,9 +751,9 @@
 
   function notFoundPage() {
     return pageHero([
-      h('h1', { class: 'split' }, words('Бул барак табылган жок')),
-      h('p', { class: 'page-hero__text', 'data-intro-fade': true }, 'Шилтеме эскирген же туура эмес терилген болушу мүмкүн. Башкы бетке кайтып, керектүү бөлүмдү тандаңыз.'),
-      h('p', { 'data-intro-fade': true, style: 'margin-top:28px' }, h('a', { class: 'btn btn--primary', href: '/' }, 'Башкы бетке кайтуу')),
+      h('h1', { class: 'split' }, words(t.nfTitle)),
+      h('p', { class: 'page-hero__text', 'data-intro-fade': true }, t.nfText),
+      h('p', { 'data-intro-fade': true, style: 'margin-top:28px' }, h('a', { class: 'btn btn--primary', href: to('/') }, t.nfBack)),
     ]);
   }
 

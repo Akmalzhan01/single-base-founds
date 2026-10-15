@@ -2,16 +2,19 @@ const mongoose = require('mongoose');
 
 // Визитка сайттын (karavan-ihlas.com) мазмуну — бир гана документ (key: 'main').
 // Суперадмин FundsDB'деги «Сайт» барагынан толтурат.
+// Тексттер кыргызча; котормолор ар бир объекттин `i18n: { ru, en }` талаасында (utils/siteI18n.js).
 
 const linkSchema = new mongoose.Schema({
   label: { type: String, trim: true },
   href: { type: String, trim: true },
+  i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
 }, { _id: false });
 
 const directionSchema = new mongoose.Schema({
   icon: { type: String, default: 'heart' },
   title: { type: String, trim: true },
   text: { type: String, trim: true },
+  i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
 }, { _id: false });
 
 // source: manual — колго жазылган сан; калгандары FundsDB'ден автоматтык эсептелет
@@ -20,12 +23,14 @@ const statSchema = new mongoose.Schema({
   label: { type: String, trim: true },
   value: { type: String, trim: true },
   source: { type: String, enum: STAT_SOURCES, default: 'manual' },
+  i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
 }, { _id: false });
 
 const donateMethodSchema = new mongoose.Schema({
   name: { type: String, trim: true },     // MBank, Элсом, банк...
   details: { type: String, trim: true },  // номер / эсеп
   note: { type: String, trim: true },     // алуучунун аты ж.б.
+  i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
 }, { _id: false });
 
 const siteSettingsSchema = new mongoose.Schema({
@@ -41,6 +46,7 @@ const siteSettingsSchema = new mongoose.Schema({
     name: { type: String, trim: true, default: 'Караван Ихлас' },
     tagline: { type: String, trim: true, default: 'Кайрымдуулук фонду' },
     logo: { type: String, trim: true, default: '' },
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   hero: {
@@ -52,6 +58,7 @@ const siteSettingsSchema = new mongoose.Schema({
     image: { type: String, trim: true, default: '' },
     primaryCta: { type: linkSchema, default: () => ({ label: 'Жардам берүү', href: '#donate' }) },
     secondaryCta: { type: linkSchema, default: () => ({ label: 'Биз жөнүндө', href: '#about' }) },
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   about: {
@@ -62,6 +69,7 @@ const siteSettingsSchema = new mongoose.Schema({
     },
     image: { type: String, trim: true, default: '' },
     foundedYear: { type: String, trim: true, default: '' },
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   directions: {
@@ -75,6 +83,7 @@ const siteSettingsSchema = new mongoose.Schema({
         { icon: 'book', title: 'Билим жана мелдештер', text: 'Жаштар үчүн билим берүүчү мелдештерди уюштурабыз.' },
       ],
     },
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   stats: {
@@ -87,6 +96,7 @@ const siteSettingsSchema = new mongoose.Schema({
         { label: 'сом жардам берилди', source: 'aidAmount' },
       ],
     },
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   donate: {
@@ -96,11 +106,13 @@ const siteSettingsSchema = new mongoose.Schema({
       default: 'Садака, зекет же кайрымдуулук жардамыңызды төмөнкү реквизиттер аркылуу жөнөтсөңүз болот. Ар бир салым муктаж үй-бүлөгө жетет.',
     },
     methods: { type: [donateMethodSchema], default: () => [] },
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   blog: {
     title: { type: String, trim: true, default: 'Жаңылыктар' },
     limit: { type: Number, default: 3, min: 1, max: 12 },
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   contacts: {
@@ -115,6 +127,7 @@ const siteSettingsSchema = new mongoose.Schema({
     youtube: { type: String, trim: true, default: '' },
     tiktok: { type: String, trim: true, default: '' },
     mapUrl: { type: String, trim: true, default: '' }, // Google Maps embed шилтемеси
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 
   // Футердеги шилтемелер (ички системалар ж.б.)
@@ -140,6 +153,7 @@ const siteSettingsSchema = new mongoose.Schema({
     title: { type: String, trim: true, default: '' },       // бош болсо — brand.name
     description: { type: String, trim: true, default: '' }, // бош болсо — hero.text
     image: { type: String, trim: true, default: '' },       // бош болсо — hero.image
+    i18n: { type: mongoose.Schema.Types.Mixed, default: undefined },
   },
 }, { timestamps: true, minimize: false });
 

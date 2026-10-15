@@ -3,6 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const audit = require('../utils/audit');
 const site = require('../services/siteService');
+const { LANGS, DEFAULT_LANG, DEFAULTS, sanitizeI18n } = require('../utils/siteI18n');
 
 // Админ өзгөртө ала турган бөлүмдөр (key, isSample, timestamps — жок)
 const EDITABLE = ['foundation', 'brand', 'hero', 'about', 'directions', 'stats', 'donate', 'blog', 'contacts', 'links', 'sections', 'seo'];
@@ -17,14 +18,18 @@ const siteUrl = () => {
 // GET /api/site
 exports.getAdmin = catchAsync(async (req, res) => {
   const doc = await SiteSettings.getMain();
-  res.status(200).json({ success: true, data: doc, siteUrl: siteUrl() });
+  // defaults — үлгү тексттердин даяр котормолору (админ панелде «автоматтык» деп көрсөтүлөт)
+  res.status(200).json({
+    success: true, data: doc, siteUrl: siteUrl(), langs: LANGS, defaultLang: DEFAULT_LANG, defaults: DEFAULTS,
+  });
 });
 
 // PUT /api/site
 exports.update = catchAsync(async (req, res) => {
   const doc = await SiteSettings.getMain();
   for (const key of EDITABLE) {
-    if (req.body[key] !== undefined) doc.set(key, req.body[key] === '' && key === 'foundation' ? null : req.body[key]);
+    if (req.body[key] === undefined) continue;
+    doc.set(key, req.body[key] === '' && key === 'foundation' ? null : sanitizeI18n(req.body[key]));
   }
   doc.isSample = false;
   await doc.save();
@@ -42,9 +47,9 @@ exports.upload = catchAsync(async (req, res, next) => {
 
 // ── Ачык (визитка сайт үчүн) ───────────────────────────────────────
 
-// GET /api/public/site
+// GET /api/public/site?lang=ky|ru|en
 exports.publicSite = catchAsync(async (req, res) => {
-  res.status(200).json({ success: true, data: await site.getPublicSite() });
+  res.status(200).json({ success: true, data: await site.getPublicSite(req.query.lang) });
 });
 
 // GET /api/public/posts?page=&limit=

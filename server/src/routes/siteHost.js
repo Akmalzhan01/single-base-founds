@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const catchAsync = require('../utils/catchAsync');
 const site = require('../services/siteService');
+const { LANGS, DEFAULT_LANG } = require('../utils/siteI18n');
 
 // Визитка сайт (репонун site/ папкасы) ушул домендерде ачылат.
 // Жергиликтүү текшерүү: http://site.localhost:5000
@@ -40,8 +41,32 @@ const baseUrl = (req) =>
 const fill = (html, values) =>
   html.replace(/\{\{(\w+)\}\}/g, (m, key) => (key in values ? values[key] : m));
 
+// Тилдер: кыргызча — /, орусча — /ru/..., англисче — /en/...
+const LANG_RE = new RegExp(`^/(${LANGS.filter((l) => l !== DEFAULT_LANG).join('|')})(?=/|$)`);
+const UI = {
+  ky: { locale: 'ky_KG', news: 'Жаңылыктар', skip: 'Негизги мазмунга өтүү', noscript: "Сайтты көрүү үчүн браузерде JavaScript'ти күйгүзүңүз." },
+  ru: { locale: 'ru_RU', news: 'Новости', skip: 'Перейти к содержанию', noscript: 'Чтобы открыть сайт, включите JavaScript в браузере.' },
+  en: { locale: 'en_US', news: 'News', skip: 'Skip to content', noscript: 'Please enable JavaScript in your browser to view this site.' },
+};
+
+// Тилдин префикси + барактын жолу: ('ru', '/blog') → '/ru/blog'; ('ky', '/') → '/'
+const pathFor = (lang, rest) => {
+  const prefix = lang === DEFAULT_LANG ? '' : `/${lang}`;
+  return rest === '/' ? (prefix || '/') : `${prefix}${rest}`;
+};
+
+const parsePath = (p) => {
+  const m = p.match(LANG_RE);
+  const lang = m ? m[1] : DEFAULT_LANG;
+  let rest = (m ? p.slice(m[0].length) : p) || '/';
+  if (rest.length > 1) rest = rest.replace(/\/+$/, '') || '/';
+  return { lang, rest };
+};
+
 const render = catchAsync(async (req, res) => {
-  const data = await site.getPublicSite();
+  const { lang, rest } = parsePath(req.path);
+  const ui = UI[lang];
+  const data = await site.getPublicSite(lang);
   let status = 200;
   let page = { type: 'home' };
 
@@ -50,11 +75,12 @@ const render = catchAsync(async (req, res) => {
   let description = data.seo?.description || data.hero?.text || '';
   let image = data.seo?.image || data.hero?.image || data.brand?.logo || '';
 
-  if (req.path === '/blog') {
+  const postMatch = rest.match(/^\/blog\/([^/]+)$/);
+  if (rest === '/blog') {
     page = { type: 'blog', ...(await site.listPosts({ page: req.query.page, limit: 9 })) };
-    title = `${data.blog?.title || 'Жаңылыктар'} — ${brand}`;
-  } else if (req.params.id) {
-    const post = await site.getPost(req.params.id);
+    title = `${data.blog?.title || ui.news} — ${brand}`;
+  } else if (postMatch) {
+    const post = await site.getPost(postMatch[1]);
     if (post) {
       page = { type: 'post', post };
       title = `${post.title} — ${brand}`;
@@ -64,21 +90,33 @@ const render = catchAsync(async (req, res) => {
       status = 404;
       page = { type: 'notfound' };
     }
-  } else if (req.path !== '/') {
+  } else if (rest !== '/') {
     status = 404;
     page = { type: 'notfound' };
   }
 
-  const url = `${baseUrl(req)}${req.path}`;
+  const origin = baseUrl(req);
+  const query = rest === '/blog' && Number(req.query.page) > 1 ? `?page=${Number(req.query.page)}` : '';
+  // Издөө системалары үчүн: ушул барактын башка тилдердеги дареги
+  const alternates = status === 200
+    ? [...LANGS.map((l) => [l, pathFor(l, rest)]), ['x-default', pathFor(DEFAULT_LANG, rest)]]
+      .map(([l, p]) => `<link rel="alternate" hreflang="${l}" href="${escapeHtml(origin + p + query)}">`)
+      .join('\n  ')
+    : '';
+
   res.status(status).type('html').send(fill(getTemplate(), {
-    LANG: 'ky',
+    LANG: lang,
+    LOCALE: ui.locale,
     TITLE: escapeHtml(title),
     DESCRIPTION: escapeHtml(description.slice(0, 300)),
     IMAGE: escapeHtml(image),
-    URL: escapeHtml(url),
+    URL: escapeHtml(origin + pathFor(lang, rest) + query),
+    ALTERNATES: alternates,
     SITE_NAME: escapeHtml(brand),
+    SKIP: escapeHtml(ui.skip),
+    NOSCRIPT: escapeHtml(ui.noscript),
     V: VERSION,
-    DATA: scriptJson({ site: data, page }),
+    DATA: scriptJson({ site: data, page: { ...page, lang, base: lang === DEFAULT_LANG ? '' : `/${lang}` } }),
   }));
 });
 
@@ -92,7 +130,8 @@ siteRouter.get('/robots.txt', (req, res) => {
 siteRouter.get('/sitemap.xml', catchAsync(async (req, res) => {
   const base = baseUrl(req);
   const { data: posts } = await site.listPosts({ limit: 30 });
-  const urls = [`${base}/`, `${base}/blog`, ...posts.map((p) => `${base}/blog/${p._id}`)];
+  const paths = ['/', '/blog', ...posts.map((p) => `/blog/${p._id}`)];
+  const urls = LANGS.flatMap((l) => paths.map((p) => `${base}${pathFor(l, p)}`));
   res.type('application/xml').send(
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${
       urls.map((u) => `  <url><loc>${escapeHtml(u)}</loc></url>`).join('\n')
@@ -100,8 +139,8 @@ siteRouter.get('/sitemap.xml', catchAsync(async (req, res) => {
   );
 }));
 
-siteRouter.get(['/', '/blog', '/blog/:id'], render);
-siteRouter.use((req, res, next) => (req.method === 'GET' ? render(req, res, next) : res.sendStatus(404)));
+// Бардык GET суроолор (/, /blog, /blog/:id жана алардын /ru, /en түрлөрү) render'ге барат
+siteRouter.use((req, res, next) => (req.method === 'GET' || req.method === 'HEAD' ? render(req, res, next) : res.sendStatus(404)));
 
 // Сайттын доменинен келген (API эмес) суроолорду гана кармайт, калганы FundsDB'ге өтөт
 module.exports = (req, res, next) => {

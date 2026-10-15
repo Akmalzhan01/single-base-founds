@@ -4,6 +4,7 @@ const Beneficiary = require('../models/Beneficiary');
 const AidRecord = require('../models/AidRecord');
 const Foundation = require('../models/Foundation');
 const Post = require('../models/Post');
+const { localize, normLang } = require('../utils/siteI18n');
 
 // Визитка сайт ар бир ачылганда базага барбашы үчүн жөнөкөй кэш.
 // Суперадмин сактаганда invalidate() чакырылат.
@@ -100,10 +101,14 @@ const getPost = async (id, { countView = true } = {}) => {
   return post ? toPublicPost(post, true) : null;
 };
 
-// Сайтка керектүү бардык маалымат: мазмун + эсептелген сандар + акыркы посттор
-const getPublicSite = async () => {
-  const s = await getSettings();
-  const values = await computeStats(s.foundation);
+// Сайтка керектүү бардык маалымат: мазмун (тандалган тилде) + эсептелген сандар + акыркы посттор
+const getPublicSite = async (lang) => {
+  const raw = await getSettings();
+  const values = await computeStats(raw.foundation);
+  const s = localize({
+    brand: raw.brand, hero: raw.hero, about: raw.about, directions: raw.directions, stats: raw.stats,
+    donate: raw.donate, blog: raw.blog, contacts: raw.contacts, links: raw.links, seo: raw.seo,
+  }, normLang(lang));
 
   // ru-RU сандарды бөлүүчү катары NBSP (U+00A0 / U+202F) колдонот — кадимки боштукка алмаштырабыз
   const fmt = (n) => Number(n).toLocaleString('ru-RU').replace(/\s/g, ' ');
@@ -114,7 +119,7 @@ const getPublicSite = async () => {
     }))
     .filter((item) => item.label && item.value !== undefined && item.value !== '');
 
-  const posts = s.sections?.blog ? (await listPosts({ limit: s.blog?.limit || 3 })).data : [];
+  const posts = raw.sections?.blog ? (await listPosts({ limit: raw.blog?.limit || 3 })).data : [];
 
   return {
     brand: s.brand,
@@ -126,7 +131,7 @@ const getPublicSite = async () => {
     blog: { title: s.blog?.title, posts },
     contacts: s.contacts,
     links: s.links,
-    sections: s.sections,
+    sections: raw.sections,
     seo: s.seo,
   };
 };
