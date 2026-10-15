@@ -172,7 +172,7 @@
   // ── Оймо-чиймелер ────────────────────────────────────────────
   // Кочкор мүйүз — кайталануучу плитка
   let ornamentId = 0;
-  function ornament({ tile = 44, bg = '#1B2B52', line = '#14868C', accent = '#E9AB3C', className = '' } = {}) {
+  function ornament({ tile = 44, bg = '#1B2B52', line = '#009746', accent = '#E9AB3C', className = '' } = {}) {
     const id = `km-${++ornamentId}`;
     const horn = 'M20 20 C20 12 28 10 30.5 15 C32.5 19 27.5 21.5 25.5 18';
     return svg(`
@@ -217,7 +217,7 @@
         <g fill="none" stroke-linejoin="round">
           <circle r="97" stroke="currentColor" stroke-opacity=".28" stroke-width=".6"/>
           <polygon points="${starPoints(94)}" stroke="#E9AB3C" stroke-width="1"/>
-          <polygon points="${starPoints(94, 22.5)}" stroke="#14868C" stroke-width="1"/>
+          <polygon points="${starPoints(94, 22.5)}" stroke="#009746" stroke-width="1"/>
           <circle r="58" stroke="currentColor" stroke-opacity=".35" stroke-width=".6"/>
           <polygon points="${starPoints(54)}" stroke="#E9AB3C" stroke-width=".8"/>
           <polygon points="${starPoints(30, 22.5)}" fill="#E9AB3C" fill-opacity=".2" stroke="#E9AB3C" stroke-width=".8"/>
@@ -245,7 +245,7 @@
     <svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true">
       <rect width="64" height="64" rx="14" fill="#1B2B52"/>
       <path d="M14 52 V31 C14 21 26 16 32 10 C38 16 50 21 50 31 V52 Z" fill="none" stroke="#E9AB3C" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M32 26l7 7-7 7-7-7Z" fill="#14868C"/>
+      <path d="M32 26l7 7-7 7-7-7Z" fill="#009746"/>
     </svg>`);
 
   function brand(extraClass = '') {
@@ -347,7 +347,7 @@
 
     const media = has(H.image)
       ? h('img', { class: 'arch__media', src: H.image, alt: '', fetchpriority: 'high' })
-      : ornament({ tile: 58, bg: '#14868C', line: '#1B2B52', accent: '#E9AB3C', className: 'arch__media' });
+      : ornament({ tile: 58, bg: '#009746', line: '#1B2B52', accent: '#E9AB3C', className: 'arch__media' });
 
     const outline = svg(`
       <svg class="arch__outline" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">
@@ -522,8 +522,8 @@
 
   // Сүрөтү жок посттордо түрүнө жараша ар түстүү оймо-чийме
   const COVER = {
-    yangilik: { bg: '#1B2B52', line: '#14868C', accent: '#E9AB3C' },
-    musobaqa: { bg: '#14868C', line: '#1B2B52', accent: '#E9AB3C' },
+    yangilik: { bg: '#1B2B52', line: '#009746', accent: '#E9AB3C' },
+    musobaqa: { bg: '#009746', line: '#1B2B52', accent: '#E9AB3C' },
     elon: { bg: '#E9AB3C', line: '#1B2B52', accent: '#FBFCFB' },
   };
 
